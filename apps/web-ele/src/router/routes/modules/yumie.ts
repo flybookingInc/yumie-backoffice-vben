@@ -105,7 +105,7 @@ const routes: RouteRecordRaw[] = [
   {
     children: [
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/settings/room-types.vue'),
         meta: { icon: 'lucide:bed-double', title: '房型' },
         name: 'SettingsRoomTypes',
         path: '/settings/room-types',

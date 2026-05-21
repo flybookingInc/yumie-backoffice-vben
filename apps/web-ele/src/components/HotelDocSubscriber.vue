@@ -11,6 +11,8 @@
  */
 import type { Unsubscribe } from 'firebase/firestore';
 
+import type { HotelMeta } from '#/store/hotel';
+
 import { onScopeDispose, watch, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -20,7 +22,7 @@ import { useUserStore } from '@vben/stores';
 import { ElNotification } from 'element-plus';
 
 import { watchHotelDoc } from '#/firebase/firestore-readonly';
-import { useHotelStore, type HotelMeta } from '#/store/hotel';
+import { useHotelStore } from '#/store/hotel';
 
 const hotelStore = useHotelStore();
 const userStore = useUserStore();
