@@ -1,13 +1,16 @@
-import { baseRequestClient, requestClient } from '#/api/request';
-
+/**
+ * 舊版 vben 的 `loginApi / refreshTokenApi / logoutApi / getAccessCodesApi`
+ * 對應的後端 REST endpoint 不存在於 Yumie 後台。
+ *
+ * Auth 一律走 Firebase Web SDK，見 `src/firebase/auth-sync.ts` 與 `src/store/auth.ts`。
+ * 此檔保留型別 namespace 供 vben framework 內既有 import；函式僅作 no-op 兜底。
+ */
 export namespace AuthApi {
-  /** 登录接口参数 */
   export interface LoginParams {
     password?: string;
     username?: string;
   }
 
-  /** 登录接口返回值 */
   export interface LoginResult {
     accessToken: string;
   }
@@ -18,34 +21,26 @@ export namespace AuthApi {
   }
 }
 
-/**
- * 登录
- */
-export async function loginApi(data: AuthApi.LoginParams) {
-  return requestClient.post<AuthApi.LoginResult>('/auth/login', data);
+function deprecated(name: string): never {
+  throw new Error(
+    `[yumie-backoffice] ${name} is deprecated — use Firebase Auth via #/firebase/auth-sync`,
+  );
 }
 
-/**
- * 刷新accessToken
- */
-export async function refreshTokenApi() {
-  return baseRequestClient.post<AuthApi.RefreshTokenResult>('/auth/refresh', {
-    withCredentials: true,
-  });
+export async function loginApi(
+  _data: AuthApi.LoginParams,
+): Promise<AuthApi.LoginResult> {
+  deprecated('loginApi');
 }
 
-/**
- * 退出登录
- */
-export async function logoutApi() {
-  return baseRequestClient.post('/auth/logout', {
-    withCredentials: true,
-  });
+export async function refreshTokenApi(): Promise<AuthApi.RefreshTokenResult> {
+  deprecated('refreshTokenApi');
 }
 
-/**
- * 获取用户权限码
- */
-export async function getAccessCodesApi() {
-  return requestClient.get<string[]>('/auth/codes');
+export async function logoutApi(): Promise<void> {
+  deprecated('logoutApi');
+}
+
+export async function getAccessCodesApi(): Promise<string[]> {
+  deprecated('getAccessCodesApi');
 }

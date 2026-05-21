@@ -1,4 +1,4 @@
-import type { Recordable, UserInfo } from '@vben/types';
+import type { Recordable } from '@vben/types';
 
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -8,11 +8,22 @@ import { preferences } from '@vben/preferences';
 import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 
 import { ElNotification } from 'element-plus';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { defineStore } from 'pinia';
 
-import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
+import {
+  InvalidClaimsError,
+  syncFirebaseUserToStores,
+} from '#/firebase/auth-sync';
+import { firebaseAuth } from '#/firebase/init';
 import { $t } from '#/locales';
 
+/**
+ * Firebase Auth 版的 auth store。
+ *
+ * `authLogin` 走 signInWithEmailAndPassword + 立即同步 store（不依賴
+ * onIdTokenChanged callback，避免 race）。失敗時清空 store + signOut。
+ */
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
   const userStore = useUserStore();
@@ -20,91 +31,102 @@ export const useAuthStore = defineStore('auth', () => {
 
   const loginLoading = ref(false);
 
-  /**
-   * 异步处理登录操作
-   * Asynchronously handle the login process
-   * @param params 登录表单数据
-   */
   async function authLogin(
     params: Recordable<any>,
     onSuccess?: () => Promise<void> | void,
   ) {
-    // 异步处理用户登录操作并获取 accessToken
-    let userInfo: null | UserInfo = null;
+    if (
+      typeof params.username !== 'string' ||
+      typeof params.password !== 'string'
+    ) {
+      throw new TypeError('authLogin requires username + password strings');
+    }
+    loginLoading.value = true;
     try {
-      loginLoading.value = true;
-      const { accessToken } = await loginApi(params);
+      const cred = await signInWithEmailAndPassword(
+        firebaseAuth,
+        params.username,
+        params.password,
+      );
+      await cred.user.getIdToken(true);
+      await syncFirebaseUserToStores(cred.user);
 
-      // 如果成功获取到 accessToken
-      if (accessToken) {
-        // 将 accessToken 存储到 accessStore 中
-        accessStore.setAccessToken(accessToken);
-
-        // 获取用户信息并存储到 accessStore 中
-        const [fetchUserInfoResult, accessCodes] = await Promise.all([
-          fetchUserInfo(),
-          getAccessCodesApi(),
-        ]);
-
-        userInfo = fetchUserInfoResult;
-
-        userStore.setUserInfo(userInfo);
-        accessStore.setAccessCodes(accessCodes);
-
-        if (accessStore.loginExpired) {
-          accessStore.setLoginExpired(false);
-        } else {
-          onSuccess
-            ? await onSuccess?.()
-            : await router.push(
-                userInfo.homePath || preferences.app.defaultHomePath,
-              );
-        }
-
-        if (userInfo?.realName) {
-          ElNotification({
-            message: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realName}`,
-            title: $t('authentication.loginSuccess'),
-            type: 'success',
-          });
-        }
+      const userInfo = userStore.userInfo;
+      if (accessStore.loginExpired) {
+        accessStore.setLoginExpired(false);
+      } else if (onSuccess) {
+        await onSuccess();
+      } else {
+        await router.push(
+          userInfo?.homePath || preferences.app.defaultHomePath,
+        );
       }
+
+      if (userInfo?.realName) {
+        ElNotification({
+          message: `${$t('authentication.loginSuccessDesc')}:${userInfo.realName}`,
+          title: $t('authentication.loginSuccess'),
+          type: 'success',
+        });
+      }
+      return { userInfo };
+    } catch (error) {
+      try {
+        await syncFirebaseUserToStores(null);
+      } catch {
+        // swallow
+      }
+      try {
+        await firebaseAuth.signOut();
+      } catch {
+        // swallow
+      }
+      if (error instanceof InvalidClaimsError) {
+        ElNotification({
+          message: '此帳號未設定正確的角色或飯店權限，請聯絡管理員',
+          title: '登入失敗',
+          type: 'error',
+        });
+      } else {
+        ElNotification({
+          message: (error as Error).message,
+          title: '登入失敗',
+          type: 'error',
+        });
+      }
+      throw error;
     } finally {
       loginLoading.value = false;
     }
-
-    return {
-      userInfo,
-    };
   }
 
-  async function logout(redirect: boolean = true) {
+  async function logout(redirect: boolean = true): Promise<void> {
     try {
-      await logoutApi();
+      await firebaseAuth.signOut();
     } catch {
-      // 不做任何处理
+      // swallow — even if signOut fails, clear local state
     }
+    await syncFirebaseUserToStores(null);
     resetAllStores();
     accessStore.setLoginExpired(false);
 
-    // 回登录页带上当前路由地址
     await router.replace({
       path: LOGIN_PATH,
       query: redirect
-        ? {
-            redirect: encodeURIComponent(router.currentRoute.value.fullPath),
-          }
+        ? { redirect: encodeURIComponent(router.currentRoute.value.fullPath) }
         : {},
     });
   }
 
-  async function fetchUserInfo() {
-    const userInfo = await getUserInfoApi();
-    userStore.setUserInfo(userInfo);
-    return userInfo;
+  async function fetchUserInfo(): Promise<
+    ReturnType<typeof useUserStore>['userInfo']
+  > {
+    // Firebase 版：user info 由 onIdTokenChanged / authLogin 同步進 store；
+    // 這裡只回 store 當前內容。
+    return userStore.userInfo;
   }
 
-  function $reset() {
+  function $reset(): void {
     loginLoading.value = false;
   }
 

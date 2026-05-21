@@ -1,5 +1,14 @@
 /**
- * 该文件可自行根据业务逻辑进行调整
+ * Yumie Backoffice request client — 對接 v2 REST API。
+ *
+ * 重點：
+ * - 每個 request 前 `await authReady`（避免 Firebase auth state 還沒 restore 時就發請求）
+ * - Authorization: Bearer <Firebase idToken>（每次 request 由 SDK 取，內部已 cache）
+ * - X-Firebase-AppCheck: 預插 header（後端目前 bypass，未來啟用不用改前端）
+ * - hotelId 注入：依 method 與 payload 型態自動補（GET/DELETE → params；FormData → append；
+ *   object → spread；無 body → `{ hotelId }`）
+ * - Response 統一 `{ code, data, message }`（vben defaultResponseInterceptor，successCode=0）
+ * - 401 → `useAuthStore().logout()`；不做 refresh（Firebase SDK 自動 refresh idToken）
  */
 import type { RequestClientOptions } from '@vben/request';
 
@@ -11,67 +20,78 @@ import {
   errorMessageResponseInterceptor,
   RequestClient,
 } from '@vben/request';
-import { useAccessStore } from '@vben/stores';
 
 import { ElMessage } from 'element-plus';
+import { getToken as getAppCheckToken } from 'firebase/app-check';
 
+import { authReady } from '#/firebase/auth-sync';
+import { appCheck, firebaseAuth } from '#/firebase/init';
 import { useAuthStore } from '#/store';
-
-import { refreshTokenApi } from './core';
+import { useHotelStore } from '#/store/hotel';
 
 const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
 
-function createRequestClient(baseURL: string, options?: RequestClientOptions) {
-  const client = new RequestClient({
-    ...options,
-    baseURL,
-  });
+function formatToken(token: null | string): null | string {
+  return token ? `Bearer ${token}` : null;
+}
 
-  /**
-   * 重新认证逻辑
-   */
-  async function doReAuthenticate() {
-    console.warn('Access token or refresh token is invalid or expired. ');
-    const accessStore = useAccessStore();
-    const authStore = useAuthStore();
-    accessStore.setAccessToken(null);
-    if (
-      preferences.app.loginExpiredMode === 'modal' &&
-      accessStore.isAccessChecked
-    ) {
-      accessStore.setLoginExpired(true);
-    } else {
-      await authStore.logout();
+function injectHotelId(config: Record<string, any>, hotelId: string): void {
+  const method = (config.method as string | undefined)?.toUpperCase();
+  if (method === 'GET' || method === 'DELETE') {
+    config.params = { hotelId, ...config.params };
+    return;
+  }
+  if (config.data instanceof FormData) {
+    if (!config.data.has('hotelId')) config.data.append('hotelId', hotelId);
+    return;
+  }
+  if (
+    config.data &&
+    typeof config.data === 'object' &&
+    !Array.isArray(config.data)
+  ) {
+    if (!('hotelId' in config.data)) {
+      config.data = { hotelId, ...config.data };
     }
+    return;
   }
-
-  /**
-   * 刷新token逻辑
-   */
-  async function doRefreshToken() {
-    const accessStore = useAccessStore();
-    const resp = await refreshTokenApi();
-    const newToken = resp.data;
-    accessStore.setAccessToken(newToken);
-    return newToken;
+  if (config.data === null || config.data === undefined) {
+    config.data = { hotelId };
   }
+}
 
-  function formatToken(token: null | string) {
-    return token ? `Bearer ${token}` : null;
-  }
+function createRequestClient(baseURL: string, options?: RequestClientOptions) {
+  const client = new RequestClient({ ...options, baseURL });
 
-  // 请求头处理
   client.addRequestInterceptor({
     fulfilled: async (config) => {
-      const accessStore = useAccessStore();
+      await authReady;
 
-      config.headers.Authorization = formatToken(accessStore.accessToken);
+      const user = firebaseAuth.currentUser;
+      if (user) {
+        const token = await user.getIdToken();
+        config.headers.Authorization = formatToken(token);
+      }
+
+      if (appCheck) {
+        try {
+          const appCheckToken = await getAppCheckToken(appCheck, false);
+          config.headers['X-Firebase-AppCheck'] = appCheckToken.token;
+        } catch (error) {
+          console.warn('AppCheck token failed:', error);
+        }
+      }
+
       config.headers['Accept-Language'] = preferences.app.locale;
+
+      const hotelId = useHotelStore().currentHotelId;
+      if (hotelId) injectHotelId(config, hotelId);
+
       return config;
     },
   });
 
-  // 处理返回的响应数据格式
+  // v2 統一 `{ code, data, message }`，successCode=0
   client.addResponseInterceptor(
     defaultResponseInterceptor({
       codeField: 'code',
@@ -80,25 +100,27 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     }),
   );
 
-  // token过期的处理
+  // 401 / token 失效 → 登出。不做 refresh — Firebase SDK 自動 refresh idToken。
   client.addResponseInterceptor(
     authenticateResponseInterceptor({
       client,
-      doReAuthenticate,
-      doRefreshToken,
-      enableRefreshToken: preferences.app.enableRefreshToken,
+      doReAuthenticate: async () => {
+        await useAuthStore().logout();
+      },
+      doRefreshToken: async () => {
+        const u = firebaseAuth.currentUser;
+        return u ? await u.getIdToken(true) : '';
+      },
+      enableRefreshToken: false,
       formatToken,
     }),
   );
 
-  // 通用的错误处理,如果没有进入上面的错误处理逻辑，就会进入这里
+  // 兜底錯誤訊息
   client.addResponseInterceptor(
     errorMessageResponseInterceptor((msg: string, error) => {
-      // 这里可以根据业务进行定制,你可以拿到 error 内的信息进行定制化处理，根据不同的 code 做不同的提示，而不是直接使用 message.error 提示 msg
-      // 当前mock接口返回的错误字段是 error 或者 message
       const responseData = error?.response?.data ?? {};
       const errorMessage = responseData?.error ?? responseData?.message ?? '';
-      // 如果没有错误信息，则会根据状态码进行提示
       ElMessage.error(errorMessage || msg);
     }),
   );

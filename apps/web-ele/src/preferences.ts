@@ -6,8 +6,10 @@ import { defineOverridesPreferences } from '@vben/preferences';
  * !!! 更改配置后请清空缓存，否则可能不生效
  */
 export const overridesPreferences = defineOverridesPreferences({
-  // overrides
   app: {
+    // frontend mode：menu / routes 由 router/routes/modules/*.ts 推導，不打後端 /menu/all
+    accessMode: 'frontend',
+    defaultHomePath: '/orders/occupy',
     name: import.meta.env.VITE_APP_TITLE,
   },
 });

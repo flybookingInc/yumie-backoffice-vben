@@ -5,6 +5,7 @@ import { preferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
 import { startProgress, stopProgress } from '@vben/utils';
 
+import { authReady } from '#/firebase/auth-sync';
 import { accessRoutes, coreRouteNames } from '#/router/routes';
 import { useAuthStore } from '#/store';
 
@@ -46,6 +47,7 @@ function setupCommonGuard(router: Router) {
  */
 function setupAccessGuard(router: Router) {
   router.beforeEach(async (to, from) => {
+    await authReady;
     const accessStore = useAccessStore();
     const userStore = useUserStore();
     const authStore = useAuthStore();
@@ -93,7 +95,7 @@ function setupAccessGuard(router: Router) {
     // 生成路由表
     // 当前登录用户拥有的角色标识列表
     const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
-    const userRoles = userInfo.roles ?? [];
+    const userRoles = userInfo?.roles ?? [];
 
     // 生成菜单和路由
     const { accessibleMenus, accessibleRoutes } = await generateAccess({
@@ -109,7 +111,7 @@ function setupAccessGuard(router: Router) {
     accessStore.setIsAccessChecked(true);
     const redirectPath = (from.query.redirect ??
       (to.path === preferences.app.defaultHomePath
-        ? userInfo.homePath || preferences.app.defaultHomePath
+        ? userInfo?.homePath || preferences.app.defaultHomePath
         : to.fullPath)) as string;
 
     return {

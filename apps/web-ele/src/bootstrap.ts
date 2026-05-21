@@ -49,6 +49,12 @@ async function bootstrap(namespace: string) {
   // 配置 pinia-tore
   await initStores(app, { namespace });
 
+  // Firebase Auth：掛上 onIdTokenChanged 並等第一次 token 同步完成
+  // （必須在 router 載入前，否則 guard 會在 user 未就緒時跑）
+  const { setupAuthListener, authReady } = await import('#/firebase/auth-sync');
+  setupAuthListener();
+  await authReady;
+
   // 安装权限指令
   registerAccessDirective(app);
 
