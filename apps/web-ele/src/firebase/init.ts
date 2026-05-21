@@ -1,3 +1,5 @@
+import type { AppCheck } from 'firebase/app-check';
+
 /**
  * Firebase 入口 — 從 import.meta.env 讀 config，回傳已初始化的 app / auth / firestore / appCheck。
  *
@@ -10,8 +12,6 @@ import { initializeApp } from 'firebase/app';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-
-import type { AppCheck } from 'firebase/app-check';
 
 export const firebaseApp = initializeApp({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -28,13 +28,13 @@ export const firestore = getFirestore(firebaseApp);
 let appCheckInstance: AppCheck | null = null;
 if (import.meta.env.VITE_USE_APPCHECK === 'true') {
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-  if (!siteKey) {
-    console.warn('AppCheck enabled but VITE_RECAPTCHA_SITE_KEY is empty');
-  } else {
+  if (siteKey) {
     appCheckInstance = initializeAppCheck(firebaseApp, {
       isTokenAutoRefreshEnabled: true,
       provider: new ReCaptchaV3Provider(siteKey),
     });
+  } else {
+    console.warn('AppCheck enabled but VITE_RECAPTCHA_SITE_KEY is empty');
   }
 }
 export const appCheck = appCheckInstance;

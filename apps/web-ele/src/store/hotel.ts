@@ -12,7 +12,6 @@ import type { Ref } from 'vue';
 import { ref } from 'vue';
 
 import { useStorage } from '@vueuse/core';
-
 import { defineStore } from 'pinia';
 
 export interface HotelMeta {

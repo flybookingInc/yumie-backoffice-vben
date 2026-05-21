@@ -18,6 +18,8 @@ import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
 import { openWindow } from '@vben/utils';
 
+import HotelDocSubscriber from '#/components/HotelDocSubscriber.vue';
+import HotelSwitcher from '#/components/HotelSwitcher.vue';
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
 import LoginForm from '#/views/_core/authentication/login.vue';
@@ -218,13 +220,17 @@ watch(
 
 <template>
   <BasicLayout @clear-preferences-and-logout="handleLogout">
+    <HotelDocSubscriber />
+    <template #header-hotel-switcher>
+      <HotelSwitcher />
+    </template>
     <template #user-dropdown>
       <UserDropdown
         :avatar
         :menus
+        :description="userStore.userInfo?.username"
+        :tag-text="userStore.userInfo?.roles?.[0] ?? ''"
         :text="userStore.userInfo?.realName"
-        description="ann.vben@gmail.com"
-        tag-text="Pro"
         @logout="handleLogout"
       />
     </template>

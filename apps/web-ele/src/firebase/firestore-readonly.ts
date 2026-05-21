@@ -1,3 +1,5 @@
+import type { DocumentData, Unsubscribe } from 'firebase/firestore';
+
 /**
  * Firestore **只讀** wrappers — 整個前端禁止從 firebase/firestore import setDoc / updateDoc /
  * addDoc / deleteDoc / batch / runTransaction。寫入一律走 v2 REST，由後端統一處理權限與 trigger。
@@ -5,7 +7,6 @@
  * 此檔只導出 onSnapshot helpers。新增訂閱點時，在此 export，view 層只 import 此檔。
  */
 import { collection, doc, onSnapshot } from 'firebase/firestore';
-import type { DocumentData, Unsubscribe } from 'firebase/firestore';
 
 import { firestore } from './init';
 
