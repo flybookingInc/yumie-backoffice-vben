@@ -220,7 +220,6 @@ watch(
 
 <template>
   <BasicLayout @clear-preferences-and-logout="handleLogout">
-    <HotelDocSubscriber />
     <!-- vben header dynamic slots must be header-{left|right}-<index>; 45 places it left of global-search (50) -->
     <template #header-right-45>
       <div class="mr-2">
@@ -250,6 +249,8 @@ watch(
       />
     </template>
     <template #extra>
+      <!-- Non-visual: subscribes qk-list/{hotelId} once login is established. -->
+      <HotelDocSubscriber />
       <AuthenticationLoginExpiredModal
         v-model:open="accessStore.loginExpired"
         :avatar
