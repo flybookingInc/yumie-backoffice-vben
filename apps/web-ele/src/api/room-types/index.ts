@@ -1,4 +1,8 @@
-import type { RoomType, RoomTypeCreateInput, RoomTypeUpdateInput } from './types';
+import type {
+  RoomType,
+  RoomTypeCreateInput,
+  RoomTypeUpdateInput,
+} from './types';
 
 import { requestClient } from '#/api/request';
 

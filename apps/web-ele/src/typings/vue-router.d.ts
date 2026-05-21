@@ -9,5 +9,3 @@ declare module 'vue-router' {
     requiresLoyalty?: boolean;
   }
 }
-
-

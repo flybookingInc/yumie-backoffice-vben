@@ -14,10 +14,19 @@ export function watchHotelDoc(
   hotelId: string,
   cb: (data: DocumentData | null) => void,
 ): Unsubscribe {
+  console.warn('[firestore] subscribe qk-list/%s', hotelId);
   return onSnapshot(
     doc(firestore, 'qk-list', hotelId),
-    (snap) => cb(snap.exists() ? snap.data() : null),
-    (err) => console.error('watchHotelDoc error', err),
+    (snap) => {
+      console.warn(
+        '[firestore] qk-list/%s snapshot exists=%s fields=%d',
+        hotelId,
+        snap.exists(),
+        snap.exists() ? Object.keys(snap.data()).length : 0,
+      );
+      cb(snap.exists() ? snap.data() : null);
+    },
+    (err) => console.error('[firestore] watchHotelDoc error', err),
   );
 }
 

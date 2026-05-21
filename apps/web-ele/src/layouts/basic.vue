@@ -221,8 +221,11 @@ watch(
 <template>
   <BasicLayout @clear-preferences-and-logout="handleLogout">
     <HotelDocSubscriber />
-    <template #header-hotel-switcher>
-      <HotelSwitcher />
+    <!-- vben header dynamic slots must be header-{left|right}-<index>; 45 places it left of global-search (50) -->
+    <template #header-right-45>
+      <div class="mr-2">
+        <HotelSwitcher />
+      </div>
     </template>
     <template #user-dropdown>
       <UserDropdown
