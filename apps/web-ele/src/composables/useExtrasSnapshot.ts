@@ -27,7 +27,7 @@ export function useExtrasSnapshot() {
   const hotelStore = useHotelStore();
   const config = computed<YumieExtrasConfig>(() => {
     const raw = hotelStore.currentHotelMeta?.extras;
-    return (raw as YumieExtrasConfig | undefined) ?? {};
+    return (raw as undefined | YumieExtrasConfig) ?? {};
   });
   const itemsMap = computed<Record<string, YumieExtrasItem>>(
     () => config.value.items ?? {},

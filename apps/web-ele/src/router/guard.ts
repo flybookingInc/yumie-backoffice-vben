@@ -5,9 +5,12 @@ import { preferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
 import { startProgress, stopProgress } from '@vben/utils';
 
+import { ElNotification } from 'element-plus';
+
 import { authReady } from '#/firebase/auth-sync';
 import { accessRoutes, coreRouteNames } from '#/router/routes';
 import { useAuthStore } from '#/store';
+import { useHotelStore } from '#/store/hotel';
 
 import { generateAccess } from './access';
 
@@ -45,6 +48,24 @@ function setupCommonGuard(router: Router) {
  * 权限访问守卫配置
  * @param router
  */
+function setupLoyaltyGuard(router: Router) {
+  router.beforeEach((to) => {
+    if (!to.meta.requiresLoyalty) return true;
+    const isSuperAdmin = useUserStore().userInfo?.roles?.includes('superAdmin');
+    if (isSuperAdmin) return true;
+    const meta = useHotelStore().currentHotelMeta;
+    if (meta && meta.loyalty?.enabled !== true) {
+      ElNotification({
+        message: '此飯店未啟用會員功能',
+        title: '無法存取',
+        type: 'warning',
+      });
+      return preferences.app.defaultHomePath;
+    }
+    return true;
+  });
+}
+
 function setupAccessGuard(router: Router) {
   router.beforeEach(async (to, from) => {
     await authReady;
@@ -130,6 +151,8 @@ function createRouterGuard(router: Router) {
   setupCommonGuard(router);
   /** 权限访问 */
   setupAccessGuard(router);
+  /** 會員功能（requiresLoyalty）— 非 superAdmin 在 loyalty.enabled=false 的飯店被擋 */
+  setupLoyaltyGuard(router);
 }
 
 export { createRouterGuard };

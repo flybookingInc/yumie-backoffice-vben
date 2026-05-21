@@ -8,7 +8,7 @@
  */
 import { computed } from 'vue';
 
-import { ElMessage, ElSelect, ElOption, ElTag } from 'element-plus';
+import { ElMessage, ElOption, ElSelect, ElTag } from 'element-plus';
 
 import { useHotelStore } from '#/store/hotel';
 
