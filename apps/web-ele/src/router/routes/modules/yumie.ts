@@ -23,7 +23,7 @@ const routes: RouteRecordRaw[] = [
   {
     children: [
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/orders/occupy.vue'),
         meta: { icon: 'lucide:clipboard-list', title: '列表' },
         name: 'OrdersOccupy',
         path: '/orders/occupy',

@@ -52,7 +52,10 @@ export interface PlanCreateInput {
 export type PlanUpdateInput = Partial<PlanCreateInput>;
 
 /** 舊 backoffice 常見休息時長（分鐘） */
-export const QK_DURATION_OPTIONS: ReadonlyArray<{ label: string; value: number }> = [
+export const QK_DURATION_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: number;
+}> = [
   { label: '2 小時', value: 120 },
   { label: '3 小時', value: 180 },
   { label: '4 小時', value: 240 },

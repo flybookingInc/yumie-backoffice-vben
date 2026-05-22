@@ -1,11 +1,7 @@
 <script lang="ts" setup>
 import type { FormInstance, FormRules } from 'element-plus';
 
-import type {
-  Plan,
-  PlanCreateInput,
-  PlanUpdateInput,
-} from '#/api/plans';
+import type { Plan, PlanCreateInput, PlanUpdateInput } from '#/api/plans';
 import type { RoomType } from '#/api/room-types';
 
 import { computed, reactive, ref, watch } from 'vue';
@@ -31,11 +27,7 @@ import {
   ElTag,
 } from 'element-plus';
 
-import {
-  plansApi,
-  QK_DURATION_OPTIONS,
-  WEEKDAY_LABELS,
-} from '#/api/plans';
+import { plansApi, QK_DURATION_OPTIONS, WEEKDAY_LABELS } from '#/api/plans';
 import { roomTypesApi } from '#/api/room-types';
 import { useHotelStore } from '#/store/hotel';
 
@@ -234,7 +226,8 @@ watch(currentHotelId, () => void load(), { immediate: true });
       <template #header>
         <div class="flex items-center justify-between">
           <span>
-            專案 — {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
+            專案 —
+            {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
           </span>
           <ElButton type="primary" @click="openCreate">新增方案</ElButton>
         </div>
@@ -243,7 +236,10 @@ watch(currentHotelId, () => void load(), { immediate: true });
         <ElTableColumn label="方案名稱" prop="planName" min-width="220">
           <template #default="{ row }">
             <div>{{ (row as Plan).planName }}</div>
-            <div v-if="(row as Plan).sequence" style="font-size: 12px; color: #888">
+            <div
+              v-if="(row as Plan).sequence"
+              style="font-size: 12px; color: #888"
+            >
               sequence: {{ (row as Plan).sequence }}
             </div>
           </template>
@@ -258,7 +254,11 @@ watch(currentHotelId, () => void load(), { immediate: true });
             {{ formatPrice((row as Plan).weekPrice) }}
             <div
               v-if="(row as Plan).weekListPrice > (row as Plan).weekPrice"
-              style="font-size: 12px; color: #888; text-decoration: line-through"
+              style="
+                font-size: 12px;
+                color: #888;
+                text-decoration: line-through;
+              "
             >
               {{ formatPrice((row as Plan).weekListPrice) }}
             </div>
@@ -269,7 +269,11 @@ watch(currentHotelId, () => void load(), { immediate: true });
             {{ formatPrice((row as Plan).weekendPrice) }}
             <div
               v-if="(row as Plan).weekendListPrice > (row as Plan).weekendPrice"
-              style="font-size: 12px; color: #888; text-decoration: line-through"
+              style="
+                font-size: 12px;
+                color: #888;
+                text-decoration: line-through;
+              "
             >
               {{ formatPrice((row as Plan).weekendListPrice) }}
             </div>
@@ -295,7 +299,9 @@ watch(currentHotelId, () => void load(), { immediate: true });
         </ElTableColumn>
         <ElTableColumn label="操作" width="160" align="center" fixed="right">
           <template #default="{ row }">
-            <ElButton size="small" @click="openEdit(row as Plan)">編輯</ElButton>
+            <ElButton size="small" @click="openEdit(row as Plan)">
+編輯
+</ElButton>
             <ElPopconfirm
               cancel-button-text="取消"
               confirm-button-text="刪除"
@@ -357,13 +363,25 @@ watch(currentHotelId, () => void load(), { immediate: true });
         </ElFormItem>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <ElFormItem label="周間售價" prop="weekPrice">
-            <ElInputNumber v-model="form.weekPrice" :min="0" style="width: 100%" />
+            <ElInputNumber
+              v-model="form.weekPrice"
+              :min="0"
+              style="width: 100%"
+            />
           </ElFormItem>
           <ElFormItem label="周間定價">
-            <ElInputNumber v-model="form.weekListPrice" :min="0" style="width: 100%" />
+            <ElInputNumber
+              v-model="form.weekListPrice"
+              :min="0"
+              style="width: 100%"
+            />
           </ElFormItem>
           <ElFormItem label="周末售價" prop="weekendPrice">
-            <ElInputNumber v-model="form.weekendPrice" :min="0" style="width: 100%" />
+            <ElInputNumber
+              v-model="form.weekendPrice"
+              :min="0"
+              style="width: 100%"
+            />
           </ElFormItem>
           <ElFormItem label="周末定價">
             <ElInputNumber
