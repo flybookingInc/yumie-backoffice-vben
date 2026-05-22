@@ -123,7 +123,8 @@ const routes: RouteRecordRaw[] = [
         path: '/settings/hotel',
       },
       {
-        component: placeholder,
+        component: () =>
+          import('#/views/yumie/settings/membership-benefits.vue'),
         meta: {
           icon: 'lucide:gift',
           requiresLoyalty: true,

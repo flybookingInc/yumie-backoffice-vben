@@ -44,6 +44,4 @@ export interface HotelCreateInput {
   notifyEmail?: string;
 }
 
-export type HotelUpdateInput = Partial<
-  Omit<HotelCreateInput, 'hotelId'>
->;
+export type HotelUpdateInput = Partial<Omit<HotelCreateInput, 'hotelId'>>;

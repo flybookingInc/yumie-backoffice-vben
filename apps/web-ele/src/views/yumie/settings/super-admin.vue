@@ -49,9 +49,7 @@ const rules: FormRules = {
       trigger: 'blur',
     },
   ],
-  hotelName: [
-    { message: '請輸入旅館名稱', required: true, trigger: 'blur' },
-  ],
+  hotelName: [{ message: '請輸入旅館名稱', required: true, trigger: 'blur' }],
 };
 
 async function load(): Promise<void> {
@@ -118,7 +116,10 @@ async function toggleLoyalty(row: HotelSummary, value: boolean): Promise<void> {
   }
 }
 
-async function toggleDisabled(row: HotelSummary, value: boolean): Promise<void> {
+async function toggleDisabled(
+  row: HotelSummary,
+  value: boolean,
+): Promise<void> {
   try {
     await hotelsApi.update(row.hotelId, { disabled: value });
     row.disabled = value;
@@ -205,16 +206,16 @@ onMounted(load);
         @submit.prevent
       >
         <ElFormItem label="Hotel ID" prop="hotelId">
-          <ElInput
-            v-model="form.hotelId"
-            placeholder="例如：my-new-hotel"
-          />
+          <ElInput v-model="form.hotelId" placeholder="例如：my-new-hotel" />
           <span style="font-size: 12px; color: #888">
             建立後不可修改；只接受小寫字母 / 數字 / 連字號 / 底線
           </span>
         </ElFormItem>
         <ElFormItem label="旅館名稱" prop="hotelName">
-          <ElInput v-model="form.hotelName" placeholder="例如：浮逸飯店永和館" />
+          <ElInput
+            v-model="form.hotelName"
+            placeholder="例如：浮逸飯店永和館"
+          />
         </ElFormItem>
         <ElFormItem label="電話">
           <ElInput v-model="form.hotelPhone" placeholder="（選填）" />
