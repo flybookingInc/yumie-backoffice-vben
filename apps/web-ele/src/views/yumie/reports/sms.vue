@@ -75,10 +75,7 @@ watch([currentHotelId, range], () => void load(), { immediate: true });
 <template>
   <div class="p-4 grid gap-4">
     <ElCard>
-      <ElStatistic
-        title="區間內簡訊筆數"
-        :value="rows.length"
-      />
+      <ElStatistic title="區間內簡訊筆數" :value="rows.length" />
     </ElCard>
 
     <ElCard>

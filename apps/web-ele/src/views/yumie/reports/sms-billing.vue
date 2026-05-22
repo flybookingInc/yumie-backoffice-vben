@@ -22,17 +22,23 @@ const hotelStore = useHotelStore();
 const stats = ref<SmsBillingStats>({ months: [], totalCount: 0 });
 const loading = ref(false);
 
-function currentMonth(offset = 0): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() + offset);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+function todayTaipei(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+}
+function offsetTaipei(days: number): string {
+  const d = new Date(`${todayTaipei()}T00:00:00+08:00`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
 }
 
-const range = ref<[string, string]>([currentMonth(-5), currentMonth(0)]);
+// 預設過去 6 個月（約 183 天）
+const range = ref<[string, string]>([offsetTaipei(-183), todayTaipei()]);
 const currentHotelId = computed(() => hotelStore.currentHotelId);
 
 function summarizeByDate(byDate: Record<string, number>): string {
-  const entries = Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b));
+  const entries = Object.entries(byDate).toSorted(([a], [b]) =>
+    a.localeCompare(b),
+  );
   if (entries.length === 0) return '-';
   return entries
     .map(([date, count]) => `${date.slice(8)}日 ${count}`)
@@ -43,10 +49,11 @@ async function load(): Promise<void> {
   const hotelId = currentHotelId.value;
   stats.value = { months: [], totalCount: 0 };
   if (!hotelId) return;
-  const [fromMonth, toMonth] = range.value;
+  const [fromDate, toDate] = range.value;
+  if (!fromDate || !toDate) return;
   loading.value = true;
   try {
-    const result = await smsApi.billing({ fromMonth, hotelId, toMonth });
+    const result = await smsApi.billing({ fromDate, hotelId, toDate });
     if (currentHotelId.value !== hotelId) return;
     stats.value = result;
   } finally {
@@ -60,10 +67,7 @@ watch([currentHotelId, range], () => void load(), { immediate: true });
 <template>
   <div class="p-4 grid gap-4">
     <ElCard>
-      <ElStatistic
-        title="區間內總筆數"
-        :value="stats.totalCount"
-      />
+      <ElStatistic title="區間內總筆數" :value="stats.totalCount" />
     </ElCard>
 
     <ElCard>
@@ -76,13 +80,13 @@ watch([currentHotelId, range], () => void load(), { immediate: true });
           <ElSpace>
             <ElDatePicker
               v-model="range"
-              type="monthrange"
-              value-format="YYYY-MM"
+              type="daterange"
+              value-format="YYYY-MM-DD"
               range-separator="至"
-              start-placeholder="起始月"
-              end-placeholder="結束月"
+              start-placeholder="起始日期"
+              end-placeholder="結束日期"
               :clearable="false"
-              style="width: 260px"
+              style="width: 280px"
             />
             <ElButton type="primary" :loading="loading" @click="load">
               查詢
@@ -90,17 +94,17 @@ watch([currentHotelId, range], () => void load(), { immediate: true });
           </ElSpace>
         </div>
       </template>
-      <ElTable
-        v-loading="loading"
-        :data="stats.months"
-        border
-        row-key="period"
-      >
+      <ElTable v-loading="loading" :data="stats.months" border row-key="period">
         <ElTableColumn label="月份" prop="period" width="140" align="center" />
-        <ElTableColumn label="月總筆數" prop="count" width="140" align="right" />
+        <ElTableColumn
+          label="月總筆數"
+          prop="count"
+          width="140"
+          align="right"
+        />
         <ElTableColumn label="每日筆數">
           <template #default="{ row }">
-            <span style="color: #aaa; font-size: 13px">
+            <span style="font-size: 13px; color: #aaa">
               {{ summarizeByDate((row as SmsBillingMonth).byDate) }}
             </span>
           </template>
