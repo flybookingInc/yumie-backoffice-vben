@@ -78,7 +78,14 @@ const baseRules: FormRules = {
     },
   ],
   name: [{ message: '請輸入姓名', required: true, trigger: 'blur' }],
-  password: [{ message: '請輸入密碼（至少 6 字）', required: true, trigger: 'blur', min: 6 }],
+  password: [
+    {
+      message: '請輸入密碼（至少 6 字）',
+      required: true,
+      trigger: 'blur',
+      min: 6,
+    },
+  ],
   rule: [{ message: '請選擇角色', required: true, trigger: 'change' }],
 };
 
@@ -229,16 +236,22 @@ onMounted(load);
         <ElTableColumn label="角色" width="160">
           <template #default="{ row }">
             <ElTag
-              :type="(row as HotelUser).rule === 'superAdmin' ? 'danger' : 'success'"
+              :type="
+                (row as HotelUser).rule === 'superAdmin' ? 'danger' : 'success'
+              "
               size="small"
             >
-              {{ (row as HotelUser).rule === 'superAdmin' ? '超級管理者' : '旅館管理者' }}
+              {{
+                (row as HotelUser).rule === 'superAdmin'
+                  ? '超級管理者'
+                  : '旅館管理者'
+              }}
             </ElTag>
           </template>
         </ElTableColumn>
         <ElTableColumn label="旅館別 hotelGroup" min-width="280">
           <template #default="{ row }">
-            <ElSpace v-if="(row as HotelUser).hotelGroup.length" wrap>
+            <ElSpace v-if="(row as HotelUser).hotelGroup.length > 0" wrap>
               <ElTag
                 v-for="id in (row as HotelUser).hotelGroup"
                 :key="id"
@@ -307,10 +320,7 @@ onMounted(load);
           />
         </ElFormItem>
         <ElFormItem label="電話">
-          <ElInput
-            v-model="form.phone"
-            placeholder="+886912345678 (含國碼)"
-          />
+          <ElInput v-model="form.phone" placeholder="+886912345678 (含國碼)" />
         </ElFormItem>
         <ElFormItem label="密碼" prop="password">
           <ElInput
@@ -338,7 +348,7 @@ onMounted(load);
               :label="h.hotelName"
               :value="h.hotelId"
               border
-              style="margin-bottom: 4px; margin-right: 4px"
+              style="margin-right: 4px; margin-bottom: 4px"
             />
           </ElCheckboxGroup>
         </ElFormItem>

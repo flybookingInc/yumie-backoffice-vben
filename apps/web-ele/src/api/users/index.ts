@@ -26,4 +26,9 @@ export const usersApi = {
   },
 };
 
-export type { HotelUser, HotelUserCreateInput, HotelUserRule, HotelUserUpdateInput };
+export type {
+  HotelUser,
+  HotelUserCreateInput,
+  HotelUserRule,
+  HotelUserUpdateInput,
+};

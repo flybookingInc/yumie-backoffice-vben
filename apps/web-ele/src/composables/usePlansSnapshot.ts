@@ -8,7 +8,7 @@ import { computed } from 'vue';
 
 import { useHotelStore } from '#/store/hotel';
 
-export interface YumiePlan {
+export interface YumiePlanRaw {
   [key: string]: unknown;
   availability?: Record<string, boolean>;
   disable?: boolean;
@@ -29,13 +29,16 @@ export interface YumiePlan {
   weekQkDuration?: string;
 }
 
+/** YumiePlanRaw plus the Firestore key promoted to a typed `id` field. */
+export type YumiePlan = YumiePlanRaw & { id: string };
+
 export function usePlansSnapshot() {
   const hotelStore = useHotelStore();
-  const plansMap = computed<Record<string, YumiePlan>>(() => {
+  const plansMap = computed<Record<string, YumiePlanRaw>>(() => {
     const raw = hotelStore.currentHotelMeta?.plans;
-    return (raw as Record<string, YumiePlan> | undefined) ?? {};
+    return (raw as Record<string, YumiePlanRaw> | undefined) ?? {};
   });
-  const plansList = computed(() =>
+  const plansList = computed<YumiePlan[]>(() =>
     Object.entries(plansMap.value)
       .map(([id, plan]) => ({ ...plan, id }))
       .toSorted((a, b) =>

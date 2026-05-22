@@ -50,7 +50,7 @@ const routes: RouteRecordRaw[] = [
         path: '/rooms/inventory',
       },
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/rooms/availability.vue'),
         meta: { icon: 'lucide:clock', title: '時段' },
         name: 'RoomsAvailability',
         path: '/rooms/availability',
