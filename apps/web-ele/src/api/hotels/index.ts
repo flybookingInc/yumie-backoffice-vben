@@ -35,6 +35,18 @@ export const hotelsApi = {
   update(id: string, data: HotelUpdateInput & { disabled?: boolean }) {
     return requestClient.put<HotelDoc>(`/hotels/${id}`, data);
   },
+  /**
+   * POST /v2/hotels/:id/photos — upload hotel image (logo / cover / favicon...).
+   * 路徑前綴：`hotels/{hotelId}/covers/`，回 `{ url, path }`。
+   */
+  uploadPhoto(id: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return requestClient.post<{ path: string; url: string }>(
+      `/hotels/${id}/photos`,
+      formData,
+    );
+  },
 };
 
 export type { HotelCreateInput, HotelDoc, HotelSummary, HotelUpdateInput };

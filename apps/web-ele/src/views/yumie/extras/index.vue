@@ -31,6 +31,7 @@ import {
 } from 'element-plus';
 
 import { extrasApi } from '#/api/extras';
+import ImageUpload from '#/components/ImageUpload.vue';
 import { useHotelStore } from '#/store/hotel';
 
 defineOptions({ name: 'ExtrasIndexPage' });
@@ -315,11 +316,19 @@ watch(currentHotelId, () => void load(), { immediate: true });
             style="width: 100%"
           />
         </ElFormItem>
-        <ElFormItem label="圖片 URL">
-          <ElInput
-            v-model="form.extraImagePath"
-            placeholder="（選填，貼上 Storage 圖片連結）"
-          />
+        <ElFormItem label="圖片">
+          <div v-if="editingId">
+            <ImageUpload
+              v-model="form.extraImagePath"
+              :upload="
+                (file) =>
+                  extrasApi.uploadPhoto(editingId, file).then((r) => r.url)
+              "
+              :width="240"
+              :height="160"
+            />
+          </div>
+          <div v-else class="form-hint">建立加購商品後即可上傳圖片</div>
         </ElFormItem>
         <ElFormItem label="排序 order">
           <ElInput
@@ -343,3 +352,10 @@ watch(currentHotelId, () => void load(), { immediate: true });
     </ElDialog>
   </div>
 </template>
+
+<style scoped>
+.form-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+</style>

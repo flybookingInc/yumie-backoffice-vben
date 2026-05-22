@@ -35,6 +35,18 @@ export const extrasApi = {
   update(id: string, data: ExtrasItemUpdateInput) {
     return requestClient.put<ExtrasItem>(`/extras/${id}`, data);
   },
+  /**
+   * POST /v2/extras/items/:itemId/photo — upload extras image.
+   * Path uses `items/:itemId` 而非 `:id/photo`，避免與 CRUD `:id` 衝突。
+   */
+  uploadPhoto(itemId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return requestClient.post<{ path: string; url: string }>(
+      `/extras/items/${itemId}/photo`,
+      formData,
+    );
+  },
 };
 
 export type {

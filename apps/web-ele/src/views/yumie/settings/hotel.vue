@@ -25,6 +25,7 @@ import {
 } from 'element-plus';
 
 import { hotelsApi } from '#/api/hotels';
+import ImageUpload from '#/components/ImageUpload.vue';
 import { useHotelStore } from '#/store/hotel';
 
 defineOptions({ name: 'SettingsHotelPage' });
@@ -73,6 +74,9 @@ function blankForm() {
     hotelAddress: '',
     hotelDescription: '',
     hotelDirection: '',
+    hotelFaviconUrl: '',
+    hotelLogoUrl: '',
+    hotelMobileLogoUrl: '',
     hotelName: '',
     hotelPhone: '',
     hotelShortDescription: '',
@@ -146,6 +150,9 @@ function hydrate(doc: HotelDoc): void {
     hotelAddress: (doc.hotelAddress as string) ?? '',
     hotelDescription: (doc.hotelDescription as string) ?? '',
     hotelDirection: (doc.hotelDirection as string) ?? '',
+    hotelFaviconUrl: (doc.hotelFaviconUrl as string) ?? '',
+    hotelLogoUrl: (doc.hotelLogoUrl as string) ?? '',
+    hotelMobileLogoUrl: (doc.hotelMobileLogoUrl as string) ?? '',
     hotelName: doc.hotelName ?? '',
     hotelPhone: doc.hotelPhone ?? '',
     hotelShortDescription: (doc.hotelShortDescription as string) ?? '',
@@ -181,6 +188,7 @@ function serialize(): Record<string, unknown> {
     },
     bookingInterval: form.bookingInterval,
     confirmScreenFooterMessage: form.confirmScreenFooterMessage,
+    coverPhoto: form.coverPhoto,
     disabled: form.disabled,
     flyKioskApi: {
       enabled: form.flyKioskApiEnabled,
@@ -197,6 +205,9 @@ function serialize(): Record<string, unknown> {
     hotelAddress: form.hotelAddress,
     hotelDescription: form.hotelDescription,
     hotelDirection: form.hotelDirection,
+    hotelFaviconUrl: form.hotelFaviconUrl,
+    hotelLogoUrl: form.hotelLogoUrl,
+    hotelMobileLogoUrl: form.hotelMobileLogoUrl,
     hotelName: form.hotelName,
     hotelPhone: form.hotelPhone,
     hotelShortDescription: form.hotelShortDescription,
@@ -246,6 +257,80 @@ async function save(): Promise<void> {
 }
 
 watch(currentHotelId, () => void load(), { immediate: true });
+
+/* ===== Cover photo helpers — 新增 / 刪除 / 上傳 ===== */
+async function addCoverPhotoFromUpload(file: File): Promise<string> {
+  const hotelId = currentHotelId.value;
+  if (!hotelId) throw new Error('未選擇飯店');
+  const { url } = await hotelsApi.uploadPhoto(hotelId, file);
+  // sequence 取目前 max + 1，避免重覆
+  let maxSeq = 0;
+  for (const p of form.coverPhoto) {
+    if ((p.sequence ?? 0) > maxSeq) maxSeq = p.sequence ?? 0;
+  }
+  form.coverPhoto.push({
+    sequence: maxSeq + 1,
+    subtitle: '',
+    title: '',
+    url,
+  });
+  return url;
+}
+
+function removeCoverPhoto(idx: number): void {
+  form.coverPhoto.splice(idx, 1);
+  resequenceCoverPhotos();
+}
+
+/** 拖完依視覺順序重編 sequence (1..N)，前端送 save 時順序與顯示一致 */
+function resequenceCoverPhotos(): void {
+  form.coverPhoto.forEach((p, i) => {
+    p.sequence = i + 1;
+  });
+}
+
+/* ===== HTML5 drag-and-drop reorder for coverPhoto cards ===== */
+const dragFromIdx = ref<null | number>(null);
+const dragOverIdx = ref<null | number>(null);
+
+function onCoverDragStart(idx: number, e: DragEvent): void {
+  dragFromIdx.value = idx;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    // Firefox 需要 setData 才會觸發 drag 事件
+    e.dataTransfer.setData('text/plain', String(idx));
+  }
+}
+
+function onCoverDragOver(idx: number, e: DragEvent): void {
+  e.preventDefault(); // 必須 preventDefault 才能 drop
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  if (dragFromIdx.value !== null && dragFromIdx.value !== idx) {
+    dragOverIdx.value = idx;
+  }
+}
+
+function onCoverDragLeave(idx: number): void {
+  if (dragOverIdx.value === idx) dragOverIdx.value = null;
+}
+
+function onCoverDrop(targetIdx: number, e: DragEvent): void {
+  e.preventDefault();
+  const from = dragFromIdx.value;
+  dragFromIdx.value = null;
+  dragOverIdx.value = null;
+  if (from === null || from === targetIdx) return;
+  const arr = form.coverPhoto;
+  const [moved] = arr.splice(from, 1);
+  if (!moved) return;
+  arr.splice(targetIdx, 0, moved);
+  resequenceCoverPhotos();
+}
+
+function onCoverDragEnd(): void {
+  dragFromIdx.value = null;
+  dragOverIdx.value = null;
+}
 </script>
 
 <template>
@@ -479,28 +564,157 @@ watch(currentHotelId, () => void load(), { immediate: true });
           </ElCard>
         </ElTabPane>
 
+        <ElTabPane label="Logo / Favicon" name="logo">
+          <ElCard shadow="never">
+            <div class="logo-grid">
+              <div class="logo-field">
+                <div class="logo-field__label">桌面 Logo (hotelLogoUrl)</div>
+                <ImageUpload
+                  v-if="currentHotelId"
+                  v-model="form.hotelLogoUrl"
+                  :upload="
+                    (file) =>
+                      hotelsApi
+                        .uploadPhoto(currentHotelId, file)
+                        .then((r) => r.url)
+                  "
+                  :width="240"
+                  :height="120"
+                />
+                <div class="form-hint">頁首顯示用。建議透明背景 PNG。</div>
+              </div>
+
+              <div class="logo-field">
+                <div class="logo-field__label">
+                  行動版 Logo (hotelMobileLogoUrl)
+                </div>
+                <ImageUpload
+                  v-if="currentHotelId"
+                  v-model="form.hotelMobileLogoUrl"
+                  :upload="
+                    (file) =>
+                      hotelsApi
+                        .uploadPhoto(currentHotelId, file)
+                        .then((r) => r.url)
+                  "
+                  :width="180"
+                  :height="120"
+                />
+                <div class="form-hint">手機 / 窄螢幕用。</div>
+              </div>
+
+              <div class="logo-field">
+                <div class="logo-field__label">Favicon (hotelFaviconUrl)</div>
+                <ImageUpload
+                  v-if="currentHotelId"
+                  v-model="form.hotelFaviconUrl"
+                  :upload="
+                    (file) =>
+                      hotelsApi
+                        .uploadPhoto(currentHotelId, file)
+                        .then((r) => r.url)
+                  "
+                  :width="120"
+                  :height="120"
+                />
+                <div class="form-hint">瀏覽器分頁圖示。建議方形 512×512。</div>
+              </div>
+            </div>
+          </ElCard>
+        </ElTabPane>
+
         <ElTabPane label="封面圖" name="cover">
-          <ElTag size="small" type="warning" style="margin-bottom: 16px">
-            圖片上傳功能待後續 ImageUpload 共用元件，目前 read-only。
-          </ElTag>
-          <div v-if="form.coverPhoto.length === 0" style="color: #888">
-            無封面圖
+          <div class="cover-add">
+            <ImageUpload
+              model-value=""
+              :upload="addCoverPhotoFromUpload"
+              :width="305"
+              :height="175"
+            />
+            <span class="form-hint" style="margin-left: 12px">
+              上傳後新增到下方列表，記得按右上「儲存」才會寫回飯店設定
+            </span>
           </div>
-          <ElRow v-else :gutter="16">
-            <ElCol v-for="photo in form.coverPhoto" :key="photo.url" :span="6">
-              <ElCard shadow="never" style="margin-bottom: 16px">
+
+          <div
+            v-if="form.coverPhoto.length === 0"
+            style="margin-top: 16px; color: #888"
+          >
+            尚無封面圖
+          </div>
+
+          <div v-else class="form-hint" style="margin-top: 16px">
+            💡 拖曳卡片重新排序，sequence 會自動依視覺順序重編。
+          </div>
+
+          <ElRow
+            v-if="form.coverPhoto.length > 0"
+            :gutter="16"
+            style="margin-top: 8px"
+          >
+            <ElCol
+              v-for="(photo, idx) in form.coverPhoto"
+              :key="`${photo.url}-${idx}`"
+              :xs="24"
+              :sm="12"
+              :md="8"
+              :lg="6"
+            >
+              <ElCard
+                shadow="never"
+                class="cover-card"
+                :class="{
+                  'cover-card--dragging': dragFromIdx === idx,
+                  'cover-card--drop-target': dragOverIdx === idx,
+                }"
+                draggable="true"
+                @dragstart="onCoverDragStart(idx, $event)"
+                @dragover="onCoverDragOver(idx, $event)"
+                @dragleave="onCoverDragLeave(idx)"
+                @drop="onCoverDrop(idx, $event)"
+                @dragend="onCoverDragEnd"
+              >
+                <div class="cover-card__handle">⋮⋮</div>
                 <ElImage
                   :src="photo.url"
                   :preview-src-list="[photo.url]"
                   fit="cover"
-                  style="width: 100%; height: 120px"
+                  style="width: 100%; height: 140px"
                 />
-                <div style="margin-top: 8px; font-size: 13px">
-                  <div>sequence: {{ photo.sequence }}</div>
-                  <div v-if="photo.title">title: {{ photo.title }}</div>
-                  <div v-if="photo.subtitle">
-                    subtitle: {{ photo.subtitle }}
+                <div style="display: grid; gap: 6px; margin-top: 8px">
+                  <div style="display: flex; gap: 6px; align-items: center">
+                    <span style="width: 60px; font-size: 12px; color: #909399">
+                      順序
+                    </span>
+                    <ElInputNumber
+                      v-model="photo.sequence"
+                      :min="1"
+                      :controls="false"
+                      size="small"
+                      style="width: 90px"
+                    />
                   </div>
+                  <div style="display: flex; gap: 6px; align-items: center">
+                    <span style="width: 60px; font-size: 12px; color: #909399">
+                      標題
+                    </span>
+                    <ElInput v-model="photo.title" size="small" />
+                  </div>
+                  <div style="display: flex; gap: 6px; align-items: center">
+                    <span style="width: 60px; font-size: 12px; color: #909399">
+                      副標
+                    </span>
+                    <ElInput v-model="photo.subtitle" size="small" />
+                  </div>
+                  <ElButton
+                    size="small"
+                    type="danger"
+                    plain
+                    style="margin-top: 4px"
+                    @click="removeCoverPhoto(idx)"
+                  >
+                    移除
+                  </ElButton>
                 </div>
               </ElCard>
             </ElCol>
@@ -510,3 +724,77 @@ watch(currentHotelId, () => void load(), { immediate: true });
     </ElCard>
   </div>
 </template>
+
+<style scoped>
+.cover-add {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.form-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.logo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+.logo-field {
+  min-width: 200px;
+}
+
+.logo-field__label {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-regular);
+}
+
+.cover-card {
+  position: relative;
+  margin-bottom: 16px;
+  cursor: grab;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.cover-card:active {
+  cursor: grabbing;
+}
+
+.cover-card--dragging {
+  opacity: 0.4;
+}
+
+.cover-card--drop-target {
+  box-shadow:
+    inset 0 0 0 2px var(--el-color-primary),
+    0 4px 16px rgb(0 0 0 / 12%);
+  transform: scale(1.02);
+}
+
+.cover-card__handle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -1px;
+  pointer-events: none;
+  background-color: rgb(0 0 0 / 55%);
+  border-radius: 4px;
+}
+</style>

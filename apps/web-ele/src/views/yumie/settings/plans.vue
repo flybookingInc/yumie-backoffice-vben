@@ -29,6 +29,7 @@ import {
 
 import { plansApi, QK_DURATION_OPTIONS, WEEKDAY_LABELS } from '#/api/plans';
 import { roomTypesApi } from '#/api/room-types';
+import ImageUpload from '#/components/ImageUpload.vue';
 import { useHotelStore } from '#/store/hotel';
 
 defineOptions({ name: 'SettingsPlansPage' });
@@ -427,11 +428,19 @@ watch(currentHotelId, () => void load(), { immediate: true });
             placeholder="（選填，數字字串，影響列表排序）"
           />
         </ElFormItem>
-        <ElFormItem label="圖片 URL">
-          <ElInput
-            v-model="form.imagePath"
-            placeholder="（選填，貼上 Storage 圖片連結）"
-          />
+        <ElFormItem label="圖片">
+          <div v-if="editingId">
+            <ImageUpload
+              v-model="form.imagePath"
+              :upload="
+                (file) =>
+                  plansApi.uploadPhoto(editingId, file).then((r) => r.url)
+              "
+              :width="305"
+              :height="175"
+            />
+          </div>
+          <div v-else class="form-hint">建立方案後即可上傳圖片</div>
         </ElFormItem>
         <ElFormItem label="狀態">
           <ElSwitch
@@ -458,3 +467,10 @@ watch(currentHotelId, () => void load(), { immediate: true });
     </ElDialog>
   </div>
 </template>
+
+<style scoped>
+.form-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+</style>

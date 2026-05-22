@@ -41,6 +41,18 @@ export const plansApi = {
       { enabled },
     );
   },
+  /**
+   * POST /v2/plans/:id/photo — upload plan image (multipart).
+   * 回 `{ url, path }`，由 caller 把 url 寫進 `imagePath`。
+   */
+  uploadPhoto(id: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return requestClient.post<{ path: string; url: string }>(
+      `/plans/${id}/photo`,
+      formData,
+    );
+  },
 };
 
 /**
