@@ -115,7 +115,8 @@ watch(currentHotelId, () => void load(), { immediate: true });
   <div class="p-4 grid gap-4">
     <ElCard v-if="!loyaltyEnabled" shadow="never">
       <ElTag type="warning" size="large">
-        此飯店尚未啟用 Loyalty（hotel.loyalty.enabled = false）— 設定仍可編輯但不會影響訂單流程。
+        此飯店尚未啟用 Loyalty（hotel.loyalty.enabled = false）—
+        設定仍可編輯但不會影響訂單流程。
       </ElTag>
     </ElCard>
 
@@ -141,7 +142,7 @@ watch(currentHotelId, () => void load(), { immediate: true });
         <div>
           <div style="margin-bottom: 8px">
             <strong>每筆訂單最高可抵比例 maxRedeemRatio (%)</strong>
-            <span style="margin-left: 8px; color: #888; font-size: 13px">
+            <span style="margin-left: 8px; font-size: 13px; color: #888">
               整數 0-100，例如 50 = 最多可抵 50%
             </span>
           </div>
@@ -158,7 +159,7 @@ watch(currentHotelId, () => void load(), { immediate: true });
           v-for="level in state.membershipBenefits"
           :key="level.levelCode"
           shadow="never"
-          style="background-color: rgba(255, 255, 255, 0.03)"
+          style="background-color: rgb(255 255 255 / 3%)"
         >
           <template #header>
             <div class="flex items-center justify-between">
@@ -173,7 +174,13 @@ watch(currentHotelId, () => void load(), { immediate: true });
             description="尚未設定規則"
             :image-size="60"
           />
-          <ElTable v-else :data="level.rules" border row-key="$index" size="small">
+          <ElTable
+            v-else
+            :data="level.rules"
+            border
+            row-key="$index"
+            size="small"
+          >
             <ElTableColumn
               label="最低預訂分鐘 minReservedMinutes"
               min-width="280"

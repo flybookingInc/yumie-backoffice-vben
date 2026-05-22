@@ -29,7 +29,7 @@ const routes: RouteRecordRaw[] = [
         path: '/orders/occupy',
       },
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/orders/booking.vue'),
         meta: { icon: 'lucide:calendar-plus', title: '預約' },
         name: 'OrdersBooking',
         path: '/orders/booking',
