@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import type { SmsBillingMonth, SmsBillingStats } from '#/api/sms';
+import type { SmsBillingRow, SmsBillingStats } from '#/api/sms';
 
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 import {
   ElButton,
@@ -14,12 +14,13 @@ import {
 } from 'element-plus';
 
 import { smsApi } from '#/api/sms';
-import { useHotelStore } from '#/store/hotel';
 
 defineOptions({ name: 'ReportsSmsBillingPage' });
 
-const hotelStore = useHotelStore();
-const stats = ref<SmsBillingStats>({ months: [], totalCount: 0 });
+const stats = ref<SmsBillingStats>({
+  rows: [],
+  totals: { beforeTaxAmount: 0, smsCount: 0, totalAmount: 0 },
+});
 const loading = ref(false);
 
 function todayTaipei(): string {
@@ -31,52 +32,68 @@ function offsetTaipei(days: number): string {
   return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
 }
 
-// 預設過去 6 個月（約 183 天）
-const range = ref<[string, string]>([offsetTaipei(-183), todayTaipei()]);
-const currentHotelId = computed(() => hotelStore.currentHotelId);
+// 預設過去 30 天（與舊版常見的月計費週期一致）
+const range = ref<[string, string]>([offsetTaipei(-29), todayTaipei()]);
 
-function summarizeByDate(byDate: Record<string, number>): string {
-  const entries = Object.entries(byDate).toSorted(([a], [b]) =>
-    a.localeCompare(b),
-  );
-  if (entries.length === 0) return '-';
-  return entries
-    .map(([date, count]) => `${date.slice(8)}日 ${count}`)
-    .join('、');
+function formatAmount(n: number): string {
+  return n.toLocaleString('zh-TW', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  });
+}
+
+/** ElTable show-summary 客製合計列（對齊舊 qk-sms-billing.html 的 tfoot 合計） */
+function summaryMethod(): string[] {
+  const { totals } = stats.value;
+  return [
+    '合計',
+    totals.smsCount.toLocaleString('zh-TW'),
+    formatAmount(totals.totalAmount),
+    formatAmount(totals.beforeTaxAmount),
+  ];
 }
 
 async function load(): Promise<void> {
-  const hotelId = currentHotelId.value;
-  stats.value = { months: [], totalCount: 0 };
-  if (!hotelId) return;
   const [fromDate, toDate] = range.value;
   if (!fromDate || !toDate) return;
   loading.value = true;
   try {
-    const result = await smsApi.billing({ fromDate, hotelId, toDate });
-    if (currentHotelId.value !== hotelId) return;
+    const result = await smsApi.billing({ fromDate, toDate });
     stats.value = result;
   } finally {
     loading.value = false;
   }
 }
 
-watch([currentHotelId, range], () => void load(), { immediate: true });
+watch(range, () => void load(), { immediate: true });
 </script>
 
 <template>
   <div class="p-4 grid gap-4">
-    <ElCard>
-      <ElStatistic title="區間內總筆數" :value="stats.totalCount" />
-    </ElCard>
+    <div class="grid gap-4 md:grid-cols-3">
+      <ElCard>
+        <ElStatistic title="總簡訊則數" :value="stats.totals.smsCount" />
+      </ElCard>
+      <ElCard>
+        <ElStatistic
+          title="總金額 (元)"
+          :precision="2"
+          :value="stats.totals.totalAmount"
+        />
+      </ElCard>
+      <ElCard>
+        <ElStatistic
+          title="稅前發票金額 (元)"
+          :precision="2"
+          :value="stats.totals.beforeTaxAmount"
+        />
+      </ElCard>
+    </div>
 
     <ElCard>
       <template #header>
         <div class="flex items-center justify-between">
-          <span>
-            費用統計 —
-            {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
-          </span>
+          <span>費用統計（跨所有飯店，superAdmin only）</span>
           <ElSpace>
             <ElDatePicker
               v-model="range"
@@ -94,19 +111,28 @@ watch([currentHotelId, range], () => void load(), { immediate: true });
           </ElSpace>
         </div>
       </template>
-      <ElTable v-loading="loading" :data="stats.months" border row-key="period">
-        <ElTableColumn label="月份" prop="period" width="140" align="center" />
-        <ElTableColumn
-          label="月總筆數"
-          prop="count"
-          width="140"
-          align="right"
-        />
-        <ElTableColumn label="每日筆數">
+      <ElTable
+        v-loading="loading"
+        :data="stats.rows"
+        border
+        row-key="hotelId"
+        show-summary
+        :summary-method="summaryMethod"
+      >
+        <ElTableColumn label="旅館名稱" prop="hotelName" min-width="220" />
+        <ElTableColumn label="簡訊則數" width="160" align="right">
           <template #default="{ row }">
-            <span style="font-size: 13px; color: #aaa">
-              {{ summarizeByDate((row as SmsBillingMonth).byDate) }}
-            </span>
+            {{ (row as SmsBillingRow).smsCount.toLocaleString('zh-TW') }}
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="總金額 (元)" width="180" align="right">
+          <template #default="{ row }">
+            {{ formatAmount((row as SmsBillingRow).totalAmount) }}
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="稅前發票金額 (元)" width="200" align="right">
+          <template #default="{ row }">
+            {{ formatAmount((row as SmsBillingRow).beforeTaxAmount) }}
           </template>
         </ElTableColumn>
       </ElTable>

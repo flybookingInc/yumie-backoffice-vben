@@ -13,7 +13,6 @@ export interface SmsRecordsParams {
 export interface SmsBillingParams {
   /** YYYY-MM-DD */
   fromDate: string;
-  hotelId?: string;
   /** YYYY-MM-DD */
   toDate: string;
 }
@@ -29,4 +28,9 @@ export const smsApi = {
   },
 };
 
-export type { SmsBillingMonth, SmsBillingStats, SmsRecord } from './types';
+export type {
+  SmsBillingRow,
+  SmsBillingStats,
+  SmsBillingTotals,
+  SmsRecord,
+} from './types';

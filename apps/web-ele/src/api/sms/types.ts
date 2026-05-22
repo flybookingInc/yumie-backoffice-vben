@@ -1,12 +1,12 @@
 /**
- * SMS 報表 — 對齊 plan §1.3。Firestore 真實 shape：
+ * SMS 報表 — 對齊 plan §1.3 + 舊 qk-sms / qk-sms-billing。
  *
- *   qk-list/{hotelId}/bigData/sms/smsRecords/{auto-id}
- *     { phone: string (E.164), timestamp: Timestamp }
- *   qk-list/{hotelId}/bigData/sms/smsCount/{YYYY-MM}
- *     { count: number, [date 'YYYY-MM-DD']: number }
+ * Firestore：`qk-list/{hotelId}/bigData/sms/smsRecords/{auto-id}` = { phone, timestamp }
  *
- * v2 normalize：phone 後 3 碼遮罩成 'xxx'（隱私）；timestamp → ISO 字串。
+ * Endpoints:
+ * - `/v2/sms/records`：單一飯店、依日期範圍列 SmsRecord，phone 後 3 碼遮罩
+ * - `/v2/sms/billing`：**跨所有飯店**、依日期範圍計費（superAdmin only）
+ *   公式：`totalAmount = smsCount × 2.5`、`beforeTaxAmount = totalAmount / 1.05`
  */
 
 export interface SmsRecord {
@@ -17,16 +17,21 @@ export interface SmsRecord {
   sentAt: string;
 }
 
-export interface SmsBillingMonth {
-  /** YYYY-MM-DD → 當日筆數 */
-  byDate: Record<string, number>;
-  /** 月總筆數 */
-  count: number;
-  /** 'YYYY-MM' */
-  period: string;
+export interface SmsBillingRow {
+  beforeTaxAmount: number;
+  hotelId: string;
+  hotelName: string;
+  smsCount: number;
+  totalAmount: number;
+}
+
+export interface SmsBillingTotals {
+  beforeTaxAmount: number;
+  smsCount: number;
+  totalAmount: number;
 }
 
 export interface SmsBillingStats {
-  months: SmsBillingMonth[];
-  totalCount: number;
+  rows: SmsBillingRow[];
+  totals: SmsBillingTotals;
 }
