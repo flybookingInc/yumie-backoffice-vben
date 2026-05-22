@@ -161,9 +161,7 @@ function hydrate(doc: HotelDoc): void {
     addressRegion: zhTwAddress.addressRegion ?? '',
     streetAddress: zhTwAddress.streetAddress ?? '',
     postalCode: zhTwAddress.postalCode ?? '',
-    weekend: Array.isArray(doc.weekend)
-      ? (doc.weekend as number[])
-      : [0, 6],
+    weekend: Array.isArray(doc.weekend) ? (doc.weekend as number[]) : [0, 6],
     wisePmsEnable: wise.enable === true,
     wisePmsFailAlertEmail: wise.failAlertEmail ?? '',
     wisePmsHotelCode: wise.HotelCode ?? '',
@@ -256,7 +254,8 @@ watch(currentHotelId, () => void load(), { immediate: true });
       <template #header>
         <div class="flex items-center justify-between">
           <span>
-            飯店設定 — {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
+            飯店設定 —
+            {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
             <ElTag
               size="small"
               :type="form.disabled ? 'danger' : 'success'"
@@ -287,7 +286,10 @@ watch(currentHotelId, () => void load(), { immediate: true });
               <ElInput v-model="form.hotelAddress" />
             </ElFormItem>
             <ElFormItem label="Google Map 連結">
-              <ElInput v-model="form.hotelDirection" placeholder="https://maps.google.com/..." />
+              <ElInput
+                v-model="form.hotelDirection"
+                placeholder="https://maps.google.com/..."
+              />
             </ElFormItem>
             <ElFormItem label="預訂時段間隔 (分鐘)">
               <ElInputNumber
@@ -311,18 +313,10 @@ watch(currentHotelId, () => void load(), { immediate: true });
               />
             </ElFormItem>
             <ElFormItem label="頁首訊息">
-              <ElInput
-                v-model="form.headerMessage"
-                type="textarea"
-                :rows="2"
-              />
+              <ElInput v-model="form.headerMessage" type="textarea" :rows="2" />
             </ElFormItem>
             <ElFormItem label="頁尾訊息">
-              <ElInput
-                v-model="form.footerMessage"
-                type="textarea"
-                :rows="2"
-              />
+              <ElInput v-model="form.footerMessage" type="textarea" :rows="2" />
             </ElFormItem>
             <ElFormItem label="全部關房訊息">
               <ElInput
@@ -358,10 +352,7 @@ watch(currentHotelId, () => void load(), { immediate: true });
               />
             </ElFormItem>
             <ElFormItem label="旅館官網網址">
-              <ElInput
-                v-model="form.hotelWebsiteUrl"
-                placeholder="https://"
-              />
+              <ElInput v-model="form.hotelWebsiteUrl" placeholder="https://" />
             </ElFormItem>
           </ElForm>
         </ElTabPane>
@@ -403,7 +394,7 @@ watch(currentHotelId, () => void load(), { immediate: true });
                   :value="d.value"
                 />
               </ElCheckboxGroup>
-              <span style="margin-left: 12px; color: #888; font-size: 13px">
+              <span style="margin-left: 12px; font-size: 13px; color: #888">
                 週末日採用 plan.weekendPrice / weekendQkDuration
               </span>
             </ElFormItem>
@@ -496,11 +487,7 @@ watch(currentHotelId, () => void load(), { immediate: true });
             無封面圖
           </div>
           <ElRow v-else :gutter="16">
-            <ElCol
-              v-for="photo in form.coverPhoto"
-              :key="photo.url"
-              :span="6"
-            >
+            <ElCol v-for="photo in form.coverPhoto" :key="photo.url" :span="6">
               <ElCard shadow="never" style="margin-bottom: 16px">
                 <ElImage
                   :src="photo.url"
@@ -511,7 +498,9 @@ watch(currentHotelId, () => void load(), { immediate: true });
                 <div style="margin-top: 8px; font-size: 13px">
                   <div>sequence: {{ photo.sequence }}</div>
                   <div v-if="photo.title">title: {{ photo.title }}</div>
-                  <div v-if="photo.subtitle">subtitle: {{ photo.subtitle }}</div>
+                  <div v-if="photo.subtitle">
+                    subtitle: {{ photo.subtitle }}
+                  </div>
                 </div>
               </ElCard>
             </ElCol>

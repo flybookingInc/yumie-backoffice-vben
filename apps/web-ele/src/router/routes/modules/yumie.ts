@@ -134,7 +134,7 @@ const routes: RouteRecordRaw[] = [
         path: '/settings/membership-benefits',
       },
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/settings/users.vue'),
         meta: {
           authority: ['superAdmin'],
           icon: 'lucide:users',
