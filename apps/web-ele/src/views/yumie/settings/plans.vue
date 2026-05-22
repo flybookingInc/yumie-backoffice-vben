@@ -300,8 +300,8 @@ watch(currentHotelId, () => void load(), { immediate: true });
         <ElTableColumn label="操作" width="160" align="center" fixed="right">
           <template #default="{ row }">
             <ElButton size="small" @click="openEdit(row as Plan)">
-編輯
-</ElButton>
+              編輯
+            </ElButton>
             <ElPopconfirm
               cancel-button-text="取消"
               confirm-button-text="刪除"

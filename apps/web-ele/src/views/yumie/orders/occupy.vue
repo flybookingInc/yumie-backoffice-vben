@@ -3,6 +3,8 @@ import type { ExtraBuyItem, Order, OrderStatus } from '#/api/orders';
 
 import { computed, ref, watch } from 'vue';
 
+import { useUserStore } from '@vben/stores';
+
 import {
   ElButton,
   ElCard,
@@ -18,7 +20,6 @@ import {
 
 import { ordersApi } from '#/api/orders';
 import { useHotelStore } from '#/store/hotel';
-import { useUserStore } from '@vben/stores';
 
 defineOptions({ name: 'OrdersOccupyPage' });
 
@@ -129,7 +130,8 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
       <template #header>
         <div class="flex items-center justify-between">
           <span>
-            列表 — {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
+            列表 —
+            {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
           </span>
           <ElSpace>
             <ElDatePicker
@@ -147,14 +149,13 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
         </div>
       </template>
 
-      <ElTable
-        v-loading="loading"
-        :data="rows"
-        border
-        row-key="id"
-        :scroll="{ x: 1400 }"
-      >
-        <ElTableColumn label="時段" prop="checkInTime" width="80" align="center" />
+      <ElTable v-loading="loading" :data="rows" border row-key="id">
+        <ElTableColumn
+          label="時段"
+          prop="checkInTime"
+          width="80"
+          align="center"
+        />
         <ElTableColumn label="號碼" width="120" align="center">
           <template #default="{ row }">
             <span>{{ (row as Order).qkNumber ?? '-' }}</span>
@@ -187,22 +188,38 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
         <template v-if="showLoyaltyColumns">
           <ElTableColumn label="等級" width="80" align="center">
             <template #default="{ row }">
-              {{ ((row as Order).membershipBenefit as { levelCode?: string } | undefined)?.levelCode ?? '-' }}
+              {{
+                (
+                  (row as Order).membershipBenefit as
+                    | { levelCode?: string }
+                    | undefined
+                )?.levelCode ?? '-'
+              }}
             </template>
           </ElTableColumn>
           <ElTableColumn label="加贈" width="80" align="center">
             <template #default="{ row }">
-              {{ ((row as Order).membershipBenefit as { freeRestMinutes?: number } | undefined)?.freeRestMinutes ?? 0 }}
+              {{
+                (
+                  (row as Order).membershipBenefit as
+                    | { freeRestMinutes?: number }
+                    | undefined
+                )?.freeRestMinutes ?? 0
+              }}
               分
             </template>
           </ElTableColumn>
         </template>
 
-        <ElTableColumn label="加購" min-width="200">
+        <ElTableColumn label="加購" width="160">
           <template #default="{ row }">
-            <span style="white-space: pre-line">
+            <span
+              v-if="(row as Order).extraBuy.items.length > 0"
+              style="white-space: pre-line"
+            >
               {{ extraBuyDisplay((row as Order).extraBuy.items) }}
             </span>
+            <span v-else style="color: #888">-</span>
           </template>
         </ElTableColumn>
         <ElTableColumn label="電話" width="140" align="center">
