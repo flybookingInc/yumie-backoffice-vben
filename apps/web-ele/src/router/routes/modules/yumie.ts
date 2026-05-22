@@ -111,7 +111,7 @@ const routes: RouteRecordRaw[] = [
         path: '/settings/room-types',
       },
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/settings/plans.vue'),
         meta: { icon: 'lucide:tag', title: '專案' },
         name: 'SettingsPlans',
         path: '/settings/plans',
