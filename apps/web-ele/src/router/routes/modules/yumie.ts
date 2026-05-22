@@ -14,10 +14,8 @@ import type { RouteRecordRaw } from 'vue-router';
  *                                       [membership-benefits → requiresLoyalty]
  * ```
  *
- * Phase 6 把每個 leaf 的 `component` 從 `_placeholder.vue` 換成真實 view。
+ * Phase 6 已完成：每個 leaf 都指向真實 view，不再使用 placeholder。
  */
-const placeholder = () => import('#/views/yumie/_placeholder.vue');
-
 const routes: RouteRecordRaw[] = [
   // 訂單
   {
@@ -44,7 +42,7 @@ const routes: RouteRecordRaw[] = [
   {
     children: [
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/rooms/inventory.vue'),
         meta: { icon: 'lucide:warehouse', title: '房量' },
         name: 'RoomsInventory',
         path: '/rooms/inventory',
