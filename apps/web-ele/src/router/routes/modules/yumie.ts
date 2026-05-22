@@ -117,7 +117,7 @@ const routes: RouteRecordRaw[] = [
         path: '/settings/plans',
       },
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/settings/hotel.vue'),
         meta: { icon: 'lucide:building', title: '系統' },
         name: 'SettingsHotel',
         path: '/settings/hotel',

@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import type { FormInstance, FormRules } from 'element-plus';
 
-import type { CreateAdminOrderInput, CreateAdminOrderResult } from '#/api/orders';
+import type {
+  CreateAdminOrderInput,
+  CreateAdminOrderResult,
+} from '#/api/orders';
 import type { Plan } from '#/api/plans';
 
 import { computed, reactive, ref, watch } from 'vue';
@@ -78,7 +81,7 @@ const planOptions = computed(() =>
   })),
 );
 
-const selectedPlan = computed<Plan | null>(() => {
+const selectedPlan = computed<null | Plan>(() => {
   if (!form.planId) return null;
   return plans.value.find((p) => p.id === form.planId) ?? null;
 });
@@ -160,7 +163,11 @@ watch(currentHotelId, () => void loadPlans(), { immediate: true });
       <template #header>
         <span>
           預約 — {{ currentHotelMeta?.hotelName ?? currentHotelId }}
-          <ElTag size="small" :type="isWeekend ? 'warning' : 'info'" style="margin-left: 8px">
+          <ElTag
+            size="small"
+            :type="isWeekend ? 'warning' : 'info'"
+            style="margin-left: 8px"
+          >
             {{ isWeekend ? '週末' : '平日' }}價格
           </ElTag>
         </span>
@@ -188,12 +195,7 @@ watch(currentHotelId, () => void loadPlans(), { immediate: true });
             filterable
             style="width: 200px"
           >
-            <ElOption
-              v-for="t in timeSlots"
-              :key="t"
-              :label="t"
-              :value="t"
-            />
+            <ElOption v-for="t in timeSlots" :key="t" :label="t" :value="t" />
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="方案" prop="planId">
@@ -217,7 +219,10 @@ watch(currentHotelId, () => void loadPlans(), { immediate: true });
             NT$ {{ effectivePrice.toLocaleString('zh-TW') }}
           </ElTag>
           <ElTag size="large" style="margin-left: 8px">
-            {{ effectiveDuration }} 分鐘 ({{ (effectiveDuration / 60).toFixed(1) }} 小時)
+            {{ effectiveDuration }} 分鐘 ({{
+              (effectiveDuration / 60).toFixed(1)
+            }}
+            小時)
           </ElTag>
           <span style="margin-left: 8px; font-size: 13px; color: #888">
             （依 {{ isWeekend ? '週末' : '平日' }}價）
@@ -253,7 +258,9 @@ watch(currentHotelId, () => void loadPlans(), { immediate: true });
           {{ lastResult.verifyNumber ?? '-' }}
         </ElDescriptionsItem>
         <ElDescriptionsItem label="預約時間">
-          {{ lastResult.checkinDatetime?.slice(0, 19).replace('T', ' ') ?? '-' }}
+          {{
+            lastResult.checkinDatetime?.slice(0, 19).replace('T', ' ') ?? '-'
+          }}
         </ElDescriptionsItem>
         <ElDescriptionsItem label="方案">
           {{ lastResult.plan_name ?? '-' }}
@@ -266,8 +273,8 @@ watch(currentHotelId, () => void loadPlans(), { immediate: true });
           label="會員優惠"
         >
           <ElAlert type="success" :closable="false" show-icon>
-            {{ lastResult.membershipBenefit.levelCode }} —
-            贈送 {{ lastResult.membershipBenefit.freeRestMinutes }} 分鐘
+            {{ lastResult.membershipBenefit.levelCode }} — 贈送
+            {{ lastResult.membershipBenefit.freeRestMinutes }} 分鐘
           </ElAlert>
         </ElDescriptionsItem>
       </ElDescriptions>
