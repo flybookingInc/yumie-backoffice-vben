@@ -65,7 +65,7 @@ const routes: RouteRecordRaw[] = [
   {
     children: [
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/extras/index.vue'),
         meta: { icon: 'lucide:package-plus', title: '加購' },
         name: 'ExtrasIndex',
         path: '/extras',
