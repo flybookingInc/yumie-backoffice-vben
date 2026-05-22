@@ -37,4 +37,9 @@ export const extrasApi = {
   },
 };
 
-export type { ExtrasItem, ExtrasItemCreateInput, ExtrasItemUpdateInput, ExtrasState };
+export type {
+  ExtrasItem,
+  ExtrasItemCreateInput,
+  ExtrasItemUpdateInput,
+  ExtrasState,
+};

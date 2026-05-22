@@ -80,13 +80,13 @@ const routes: RouteRecordRaw[] = [
   {
     children: [
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/reports/sms.vue'),
         meta: { icon: 'lucide:message-square', title: '簡訊統計' },
         name: 'ReportsSms',
         path: '/reports/sms',
       },
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/reports/sms-billing.vue'),
         meta: {
           authority: ['superAdmin'],
           icon: 'lucide:wallet',

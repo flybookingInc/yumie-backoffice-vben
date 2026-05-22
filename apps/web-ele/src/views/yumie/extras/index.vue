@@ -58,12 +58,8 @@ const blankForm = (): ExtrasItemCreateInput & { enable: boolean } => ({
 const form = reactive<ReturnType<typeof blankForm>>(blankForm());
 
 const rules: FormRules = {
-  extraName: [
-    { message: '請輸入商品名稱', required: true, trigger: 'blur' },
-  ],
-  extraPrice: [
-    { message: '請輸入價格', required: true, trigger: 'blur' },
-  ],
+  extraName: [{ message: '請輸入商品名稱', required: true, trigger: 'blur' }],
+  extraPrice: [{ message: '請輸入價格', required: true, trigger: 'blur' }],
 };
 
 const currentHotelId = computed(() => hotelStore.currentHotelId);
@@ -157,7 +153,10 @@ async function remove(row: ExtrasItem): Promise<void> {
   }
 }
 
-async function toggleItemEnable(row: ExtrasItem, value: boolean): Promise<void> {
+async function toggleItemEnable(
+  row: ExtrasItem,
+  value: boolean,
+): Promise<void> {
   try {
     await extrasApi.update(row.id, {
       enable: value,
@@ -201,7 +200,8 @@ watch(currentHotelId, () => void load(), { immediate: true });
         <div class="flex items-center justify-between">
           <ElSpace>
             <span>
-              加購 — {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
+              加購 —
+              {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
             </span>
             <template v-if="isSuperAdmin">
               <ElSwitch
