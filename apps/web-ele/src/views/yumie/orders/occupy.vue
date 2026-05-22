@@ -16,6 +16,7 @@ import {
   ElTable,
   ElTableColumn,
   ElTag,
+  ElTooltip,
 } from 'element-plus';
 
 import { ordersApi } from '#/api/orders';
@@ -211,18 +212,12 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
           </ElTableColumn>
         </template>
 
-        <ElTableColumn label="加購" width="160">
-          <template #default="{ row }">
-            <span
-              v-if="(row as Order).extraBuy.items.length > 0"
-              style="white-space: pre-line"
-            >
-              {{ extraBuyDisplay((row as Order).extraBuy.items) }}
-            </span>
-            <span v-else style="color: #888">-</span>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="電話" width="140" align="center">
+        <ElTableColumn
+          label="電話"
+          prop="guestPhone"
+          width="160"
+          align="center"
+        >
           <template #default="{ row }">
             <span>{{ (row as Order).guestPhone || '-' }}</span>
             <ElTag
@@ -237,6 +232,20 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
             >
               重複
             </ElTag>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="加購" width="100" align="center">
+          <template #default="{ row }">
+            <ElTooltip
+              v-if="(row as Order).extraBuy.items.length > 0"
+              :content="extraBuyDisplay((row as Order).extraBuy.items)"
+              placement="top"
+            >
+              <ElTag size="small" type="info">
+                {{ (row as Order).extraBuy.items.length }} 件
+              </ElTag>
+            </ElTooltip>
+            <span v-else style="color: #888">-</span>
           </template>
         </ElTableColumn>
         <ElTableColumn label="狀態" width="180" align="center" fixed="right">
