@@ -143,7 +143,7 @@ const routes: RouteRecordRaw[] = [
         path: '/settings/users',
       },
       {
-        component: placeholder,
+        component: () => import('#/views/yumie/settings/super-admin.vue'),
         meta: {
           authority: ['superAdmin'],
           icon: 'lucide:shield',
