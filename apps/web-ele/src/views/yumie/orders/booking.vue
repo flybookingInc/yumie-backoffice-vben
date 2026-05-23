@@ -44,19 +44,34 @@ const formRef = ref<FormInstance>();
 function todayTaipei(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
 }
-function nowTimeTaipei(): string {
-  return new Date().toLocaleTimeString('en-GB', {
+
+/**
+ * 回傳「嚴格大於現在時間」的最小 slot（HH:mm，依 interval 對齊）。
+ * 例：interval=30，現在 09:53 → 10:00；現在 10:00 → 10:30。
+ * 已過今天最後一格時，回傳隔天 00:00（使用者通常會自行改日期）。
+ */
+function nextSlotAfterNow(interval: number): string {
+  const taipeiTimeStr = new Date().toLocaleTimeString('en-GB', {
     hour: '2-digit',
     hour12: false,
     minute: '2-digit',
     timeZone: 'Asia/Taipei',
   });
+  const [hStr, mStr] = taipeiTimeStr.split(':');
+  const nowMinutes = Number(hStr) * 60 + Number(mStr);
+  const step = Math.max(1, Math.floor(interval));
+  const nextStep = Math.floor(nowMinutes / step) * step + step;
+  if (nextStep >= 24 * 60) return '00:00';
+  const hh = String(Math.floor(nextStep / 60)).padStart(2, '0');
+  const mm = String(nextStep % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
 }
 
 function blankForm(): CreateAdminOrderInput {
   return {
     checkInDate: todayTaipei(),
-    checkInTime: nowTimeTaipei(),
+    // checkInTime 在 hotel meta 載入後由 watcher 補上（要先知道 bookingInterval 才能算對齊的 slot）
+    checkInTime: '',
     guestPhone: '',
     planId: '',
   };
@@ -120,6 +135,19 @@ const timeSlots = computed(() => {
   return out;
 });
 
+/** 時段口語化前綴：凌晨 / 早上 / 下午 / 晚上 — 4 桶減少使用者誤選 */
+function timeBucket(hhmm: string): string {
+  const h = Number(hhmm.slice(0, 2));
+  if (h < 6) return '凌晨';
+  if (h < 12) return '早上';
+  if (h < 18) return '下午';
+  return '晚上';
+}
+
+function timeSlotLabel(hhmm: string): string {
+  return `${timeBucket(hhmm)} ${hhmm}`;
+}
+
 async function loadPlans(): Promise<void> {
   const hotelId = currentHotelId.value;
   if (!hotelId) return;
@@ -147,14 +175,29 @@ async function submit(): Promise<void> {
       type: 'success',
     });
     ElMessage.success('已建立訂單');
-    // 表單保留電話以便連續建單，但重設方案+時段
-    form.planId = '';
+    // 表單保留電話以便連續建單，但重設方案。
+    // resetFields 會原子化把欄位重設回初始值（blankForm 的 '')並清掉驗證狀態，
+    // 比 `form.planId=''` + `clearValidate` 可靠（後者會被 EP 的 async-validator
+    // 在 nextTick 之後 race condition 再寫回錯誤）。
+    formRef.value?.resetFields(['planId']);
   } finally {
     saving.value = false;
   }
 }
 
 watch(currentHotelId, () => void loadPlans(), { immediate: true });
+
+// 等 hotel meta 載入後，把 checkInTime 預設為「大於現在的最小 slot」。
+// 只在使用者尚未自行選過時段時填入，避免覆寫使用者的選擇。
+watch(
+  () => currentHotelMeta.value?.bookingInterval as number | undefined,
+  (interval) => {
+    if (interval && !form.checkInTime) {
+      form.checkInTime = nextSlotAfterNow(interval);
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -195,7 +238,12 @@ watch(currentHotelId, () => void loadPlans(), { immediate: true });
             filterable
             style="width: 200px"
           >
-            <ElOption v-for="t in timeSlots" :key="t" :label="t" :value="t" />
+            <ElOption
+              v-for="t in timeSlots"
+              :key="t"
+              :label="timeSlotLabel(t)"
+              :value="t"
+            />
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="方案" prop="planId">
