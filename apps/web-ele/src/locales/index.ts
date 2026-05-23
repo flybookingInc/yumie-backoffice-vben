@@ -16,6 +16,7 @@ import { preferences } from '@vben/preferences';
 import dayjs from 'dayjs';
 import enLocale from 'element-plus/es/locale/lang/en';
 import defaultLocale from 'element-plus/es/locale/lang/zh-cn';
+import zhTwLocale from 'element-plus/es/locale/lang/zh-tw';
 
 const elementLocale = ref<Language>(defaultLocale);
 
@@ -61,6 +62,10 @@ async function loadDayjsLocale(lang: SupportedLanguagesType) {
       locale = await import('dayjs/locale/zh-cn');
       break;
     }
+    case 'zh-TW': {
+      locale = await import('dayjs/locale/zh-tw');
+      break;
+    }
     // 默认使用英语
     default: {
       locale = await import('dayjs/locale/en');
@@ -85,6 +90,10 @@ async function loadElementLocale(lang: SupportedLanguagesType) {
     }
     case 'zh-CN': {
       elementLocale.value = defaultLocale;
+      break;
+    }
+    case 'zh-TW': {
+      elementLocale.value = zhTwLocale;
       break;
     }
   }

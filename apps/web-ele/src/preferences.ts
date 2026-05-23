@@ -10,6 +10,8 @@ export const overridesPreferences = defineOverridesPreferences({
     // frontend mode：menu / routes 由 router/routes/modules/*.ts 推導，不打後端 /menu/all
     accessMode: 'frontend',
     defaultHomePath: '/orders/occupy',
+    // 預設繁體中文（Yumie 主要市場為台灣）。使用者仍可在 preferences 面板切換 zh-CN / en-US
+    locale: 'zh-TW',
     name: import.meta.env.VITE_APP_TITLE,
   },
 });
