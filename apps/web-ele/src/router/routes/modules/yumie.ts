@@ -78,6 +78,16 @@ const routes: RouteRecordRaw[] = [
   {
     children: [
       {
+        component: () => import('#/views/yumie/reports/customers.vue'),
+        meta: {
+          authority: ['superAdmin'],
+          icon: 'lucide:users-round',
+          title: '客戶',
+        },
+        name: 'ReportsCustomers',
+        path: '/reports/customers',
+      },
+      {
         component: () => import('#/views/yumie/reports/sms.vue'),
         meta: { icon: 'lucide:message-square', title: '簡訊統計' },
         name: 'ReportsSms',
