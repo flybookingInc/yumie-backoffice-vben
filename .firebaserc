@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "yumie-test"
+    "default": "yumie-test",
+    "staging": "yumie-test",
+    "production": "yumie-8e60e"
   }
 }

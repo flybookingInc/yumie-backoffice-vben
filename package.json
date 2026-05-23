@@ -32,6 +32,8 @@
     "build:docs": "pnpm run build --filter=@vben/docs",
     "build:ele": "pnpm run build --filter=@vben/web-ele",
     "build:ele:staging": "pnpm -F @vben/web-ele run build:staging",
+    "deploy:ele:staging": "pnpm build:ele:staging && npx firebase deploy --only hosting --project=staging",
+    "deploy:ele:prod": "node ./scripts/deploy-prod-hosting.mjs",
     "changeset": "pnpm exec changeset",
     "check": "pnpm run check:circular && pnpm run check:dep && pnpm run check:type && pnpm check:cspell",
     "check:circular": "vsh check-circular",
