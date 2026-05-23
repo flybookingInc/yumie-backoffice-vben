@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { ExtraBuyItem, Order, OrderStatus } from '#/api/orders';
+import type { ExtraBuyItem, Order } from '#/api/orders';
 
 import { computed, ref, watch } from 'vue';
 
@@ -12,7 +12,6 @@ import {
   ElMessage,
   ElPopconfirm,
   ElSpace,
-  ElSwitch,
   ElTable,
   ElTableColumn,
   ElTag,
@@ -82,12 +81,11 @@ async function load(): Promise<void> {
   }
 }
 
-async function toggleArrival(row: Order, arrived: boolean): Promise<void> {
-  const nextStatus: OrderStatus = arrived ? '抵達' : 'OK';
+async function markArrived(row: Order): Promise<void> {
   try {
-    await ordersApi.updateStatus(row.id, nextStatus);
-    row.status = nextStatus;
-    ElMessage.success(arrived ? '已標記為抵達' : '已恢復為 OK');
+    await ordersApi.updateStatus(row.id, '抵達');
+    row.status = '抵達';
+    ElMessage.success('已標記為抵達');
   } catch {
     // request interceptor toasted
   }
@@ -95,9 +93,20 @@ async function toggleArrival(row: Order, arrived: boolean): Promise<void> {
 
 async function cancel(row: Order): Promise<void> {
   try {
-    await ordersApi.updateStatus(row.id, 'Canceled');
-    row.status = 'Canceled';
+    // 業者後台取消 → CanceledByAdmin（與客戶端取消 'Canceled' 區分，列表顯示「取消(業者)」）
+    await ordersApi.updateStatus(row.id, 'CanceledByAdmin');
+    row.status = 'CanceledByAdmin';
     ElMessage.success('訂單已取消');
+  } catch {
+    // interceptor toasted
+  }
+}
+
+async function markNoShow(row: Order): Promise<void> {
+  try {
+    await ordersApi.updateStatus(row.id, 'NoShow');
+    row.status = 'NoShow';
+    ElMessage.success('已標記為 No Show');
   } catch {
     // interceptor toasted
   }
@@ -248,19 +257,31 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
             <span v-else style="color: #888">-</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="狀態" width="180" align="center" fixed="right">
+        <ElTableColumn label="狀態" width="240" align="center" fixed="right">
           <template #default="{ row }">
             <template v-if="(row as Order).status === 'Canceled'">
               <ElTag type="info" size="small">取消</ElTag>
             </template>
+            <template v-else-if="(row as Order).status === 'CanceledByAdmin'">
+              <ElTag type="danger" size="small">取消(業者)</ElTag>
+            </template>
+            <template v-else-if="(row as Order).status === 'NoShow'">
+              <ElTag type="warning" size="small">No Show</ElTag>
+            </template>
+            <template v-else-if="(row as Order).status === '抵達'">
+              <ElTag type="success" size="small">抵達</ElTag>
+            </template>
             <template v-else>
-              <ElSwitch
-                :model-value="(row as Order).status === '抵達'"
-                active-text="抵達"
-                inactive-text="OK"
-                inline-prompt
-                @change="(v) => toggleArrival(row as Order, v as boolean)"
-              />
+              <ElPopconfirm
+                title="確定標記為抵達？"
+                confirm-button-text="標記"
+                cancel-button-text="返回"
+                @confirm="markArrived(row as Order)"
+              >
+                <template #reference>
+                  <ElButton size="small" type="primary" link>抵達</ElButton>
+                </template>
+              </ElPopconfirm>
               <ElPopconfirm
                 title="確定取消此訂單？"
                 confirm-button-text="取消訂單"
@@ -269,6 +290,16 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
               >
                 <template #reference>
                   <ElButton size="small" type="danger" link>取消</ElButton>
+                </template>
+              </ElPopconfirm>
+              <ElPopconfirm
+                title="確定標記為 No Show？"
+                confirm-button-text="標記"
+                cancel-button-text="返回"
+                @confirm="markNoShow(row as Order)"
+              >
+                <template #reference>
+                  <ElButton size="small" type="warning" link>No Show</ElButton>
                 </template>
               </ElPopconfirm>
             </template>

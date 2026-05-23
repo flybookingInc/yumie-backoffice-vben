@@ -9,7 +9,20 @@
  *
  * 前端拿到的就是這個 clean shape。
  */
-export type OrderStatus = 'Canceled' | 'OK' | '抵達';
+/**
+ * Order status enum (Firestore raw values)：
+ * - `OK`: 正常
+ * - `抵達`: 客人已到
+ * - `Canceled`: 客戶端取消（yumie-frontend 客人自行取消）
+ * - `CanceledByAdmin`: 業者後台取消（display: "取消(業者)"）
+ * - `NoShow`: 客人未到（業者標記，display: "No Show"）
+ */
+export type OrderStatus =
+  | 'Canceled'
+  | 'CanceledByAdmin'
+  | 'NoShow'
+  | 'OK'
+  | '抵達';
 
 export interface ExtraBuyItem {
   itemAmt?: number;
