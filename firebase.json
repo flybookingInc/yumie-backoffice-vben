@@ -1,0 +1,16 @@
+{
+  "hosting": {
+    "public": "apps/web-ele/dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "/v2/**",
+        "function": { "functionId": "api", "region": "asia-east1" }
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
