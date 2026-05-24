@@ -437,8 +437,8 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
                 >
                   <template #reference>
                     <ElButton size="small" type="warning" link>
-No Show
-</ElButton>
+                      No Show
+                    </ElButton>
                   </template>
                 </ElPopconfirm>
               </template>

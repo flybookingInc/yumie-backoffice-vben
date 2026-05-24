@@ -367,8 +367,7 @@ async function applyBatch(): Promise<void> {
             <div class="slot-tip">
               批次勾選：點一格設為起點 →
               <kbd>Shift</kbd> + 點另一格選取矩形範圍 →
-              底部工具列選擇勾選/不勾選後套用。
-              <kbd>Esc</kbd> 取消選取。
+              底部工具列選擇勾選/不勾選後套用。 <kbd>Esc</kbd> 取消選取。
             </div>
           </div>
         </ElTabPane>
@@ -466,8 +465,8 @@ async function applyBatch(): Promise<void> {
 }
 
 .slot-checkbox {
-  margin-right: 0;
   width: 100%;
+  margin-right: 0;
 }
 
 .slot-cell {
