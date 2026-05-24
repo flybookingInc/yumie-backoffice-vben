@@ -21,6 +21,9 @@ export const overridesPreferences = defineOverridesPreferences({
     source: '/assets/images/logo_black.png',
     sourceDark: '/assets/images/logo_white.png',
   },
+  theme: {
+    mode: 'light',
+  },
   widget: {
     lockScreen: false,
   },
