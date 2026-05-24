@@ -45,6 +45,7 @@
     "dayjs": "catalog:",
     "element-plus": "catalog:",
     "firebase": "^10.14.1",
+    "libphonenumber-js": "^1.13.3",
     "pinia": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:"
