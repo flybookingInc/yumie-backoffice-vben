@@ -33,3 +33,10 @@ export interface CustomerListResponse {
   customers: Customer[];
   total: number;
 }
+
+export interface CustomerListParams {
+  /** ISO datetime lower bound for order booking_datetime. */
+  since?: string;
+  /** ISO datetime upper bound for order booking_datetime. */
+  until?: string;
+}

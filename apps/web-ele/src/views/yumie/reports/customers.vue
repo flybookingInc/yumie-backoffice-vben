@@ -1,13 +1,15 @@
 <script lang="ts" setup>
 import type { Customer } from '#/api/customers';
 
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import {
   ElButton,
   ElCard,
   ElInput,
   ElMessage,
+  ElOption,
+  ElSelect,
   ElTable,
   ElTableColumn,
   ElTag,
@@ -23,23 +25,47 @@ const hotelStore = useHotelStore();
 const customers = ref<Customer[]>([]);
 const loading = ref(false);
 const search = ref('');
+type DateRangeFilter = '30d' | '90d' | '365d';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const rangeFilter = ref<DateRangeFilter>('90d');
+const rangeOptions = [
+  { label: '30 天', value: '30d' },
+  { label: '90 天', value: '90d' },
+  { label: '一年', value: '365d' },
+] as const satisfies { label: string; value: DateRangeFilter }[];
 
 const currentHotelId = computed(() => hotelStore.currentHotelId);
 
+function buildListParams(): { since: string; until: string } {
+  const nowMs = Date.now();
+  const until = new Date(nowMs).toISOString();
+
+  const daysByRange = {
+    '30d': 30,
+    '90d': 90,
+    '365d': 365,
+  } as const satisfies Record<DateRangeFilter, number>;
+  const since = new Date(
+    nowMs - daysByRange[rangeFilter.value] * MS_PER_DAY,
+  ).toISOString();
+  return { since, until };
+}
+
 async function load(): Promise<void> {
-  if (!currentHotelId.value) return;
+  const hotelId = currentHotelId.value;
+  if (!hotelId) return;
   loading.value = true;
   try {
-    const { customers: list } = await customersApi.list();
-    if (!currentHotelId.value) return;
+    const { customers: list } = await customersApi.list(buildListParams());
+    if (currentHotelId.value !== hotelId) return;
     customers.value = list;
   } finally {
     loading.value = false;
   }
 }
 
-watch(currentHotelId, () => void load(), { immediate: true });
-onMounted(() => void load());
+watch([currentHotelId, rangeFilter], () => void load(), { immediate: true });
 
 const filteredRows = computed<Customer[]>(() => {
   const kw = search.value.trim();
@@ -116,6 +142,18 @@ async function refresh(): Promise<void> {
             </ElTag>
           </span>
           <div class="flex items-center" style="gap: 8px">
+            <ElSelect
+              v-model="rangeFilter"
+              aria-label="日期範圍"
+              style="width: 120px"
+            >
+              <ElOption
+                v-for="option in rangeOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </ElSelect>
             <ElInput
               v-model="search"
               placeholder="搜尋電話 / 客戶 ID / 方案名稱"
