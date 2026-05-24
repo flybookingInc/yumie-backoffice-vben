@@ -1,0 +1,64 @@
+<svg width="720" height="520" viewBox="0 0 720 520" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Yumie hospitality backoffice illustration">
+  <defs>
+    <linearGradient id="gold" x1="171" y1="34" x2="422" y2="427" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8D55F"/>
+      <stop offset="1" stop-color="#E3A91B"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="371" y1="126" x2="552" y2="350" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#40E7F0"/>
+      <stop offset="1" stop-color="#2B77F6"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="196" y1="164" x2="354" y2="363" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C86BFF"/>
+      <stop offset="1" stop-color="#5D6DFF"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(356 266) rotate(90) scale(252 325)">
+      <stop stop-color="#233D85" stop-opacity=".65"/>
+      <stop offset="1" stop-color="#07101C" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="73" y="48" width="572" height="430" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="18"/>
+      <feGaussianBlur stdDeviation="22"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.01 0 0 0 0 0.03 0 0 0 0 0.08 0 0 0 0.55 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="720" height="520" fill="transparent"/>
+  <ellipse cx="356" cy="266" rx="325" ry="252" fill="url(#glow)"/>
+
+  <g filter="url(#shadow)">
+    <path d="M131 352L356 222L589 352L356 472L131 352Z" fill="#0B1630"/>
+    <path d="M131 324L356 194L589 324L356 444L131 324Z" fill="#122C61"/>
+    <path d="M180 322L356 220L540 322L356 417L180 322Z" fill="#173F8F"/>
+    <path d="M180 322L356 417L540 322" stroke="#56E3F1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <rect x="252" y="248" width="214" height="126" rx="18" fill="#0E1B35" stroke="#315AA7" stroke-width="2"/>
+    <rect x="278" y="278" width="70" height="16" rx="8" fill="#55D4EF" opacity=".92"/>
+    <rect x="278" y="310" width="142" height="12" rx="6" fill="#FFFFFF" opacity=".24"/>
+    <rect x="278" y="338" width="110" height="12" rx="6" fill="#FFFFFF" opacity=".18"/>
+    <circle cx="424" cy="306" r="20" fill="url(#gold)"/>
+    <path d="M414 306C414 299.9 418.8 295 425 295C431.1 295 436 299.9 436 306C436 316 425 324 425 324C425 324 414 316 414 306Z" fill="#111827"/>
+    <path d="M420.3 303.6C420.3 301.7 421.8 300.2 423.6 300.2C424.9 300.2 426 300.8 426.6 301.8C427.2 300.8 428.3 300.2 429.6 300.2C431.4 300.2 432.9 301.7 432.9 303.6C432.9 308.1 426.6 312.4 426.6 312.4C426.6 312.4 420.3 308.1 420.3 303.6Z" fill="white"/>
+
+    <path d="M318 205C318 144 367 95 428 95C489 95 538 144 538 205C538 299 428 358 428 358C428 358 318 299 318 205Z" fill="url(#gold)"/>
+    <path d="M384 190C384 171 399 156 418 156C430 156 441 162 448 171C454 162 465 156 478 156C497 156 512 171 512 190C512 235 448 274 448 274C448 274 384 235 384 190Z" fill="white"/>
+
+    <rect x="135" y="217" width="84" height="124" rx="14" fill="url(#violet)"/>
+    <rect x="152" y="242" width="50" height="12" rx="6" fill="white" opacity=".42"/>
+    <rect x="152" y="271" width="36" height="12" rx="6" fill="white" opacity=".3"/>
+    <rect x="152" y="300" width="44" height="12" rx="6" fill="white" opacity=".22"/>
+
+    <rect x="501" y="232" width="94" height="100" rx="16" fill="url(#cyan)"/>
+    <rect x="521" y="253" width="54" height="10" rx="5" fill="white" opacity=".55"/>
+    <rect x="521" y="278" width="30" height="10" rx="5" fill="white" opacity=".38"/>
+    <rect x="521" y="303" width="42" height="10" rx="5" fill="white" opacity=".28"/>
+
+    <path d="M180 386C235 430 492 428 544 385" stroke="#F0BC35" stroke-width="10" stroke-linecap="round"/>
+    <path d="M205 393C263 417 461 415 522 393" stroke="#FFF1B2" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  </g>
+</svg>

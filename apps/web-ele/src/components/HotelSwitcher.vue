@@ -13,8 +13,10 @@
 import type { HotelSummary } from '#/api/hotels';
 
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
-import { useUserStore } from '@vben/stores';
+import { preferences } from '@vben/preferences';
+import { useAccessStore, useUserStore } from '@vben/stores';
 
 import { ElMessage, ElOption, ElSelect, ElTag } from 'element-plus';
 
@@ -22,7 +24,9 @@ import { hotelsApi } from '#/api/hotels';
 import { useHotelStore } from '#/store/hotel';
 
 const hotelStore = useHotelStore();
+const accessStore = useAccessStore();
 const userStore = useUserStore();
+const router = useRouter();
 
 const isSuperAdmin = computed(
   () => userStore.userInfo?.roles?.includes('superAdmin') === true,
@@ -81,7 +85,14 @@ const currentLabel = computed(
 function handleChange(value: string): void {
   if (!value || value === hotelStore.currentHotelId) return;
   hotelStore.switchHotel(value);
+  accessStore.setAccessMenus([]);
+  accessStore.setAccessRoutes([]);
+  accessStore.setIsAccessChecked(false);
   ElMessage.info(`已切換到 ${hotelNameMap.value[value] ?? value}`);
+  router.replace({
+    path: preferences.app.defaultHomePath,
+    query: { hotel: value },
+  });
 }
 </script>
 

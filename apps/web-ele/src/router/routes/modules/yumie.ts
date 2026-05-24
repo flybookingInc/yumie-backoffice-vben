@@ -15,6 +15,7 @@ import type { RouteRecordRaw } from 'vue-router';
  * ```
  *
  * Phase 6 已完成：每個 leaf 都指向真實 view，不再使用 placeholder。
+ * 會員選單改由 yumie-backend `/v2/menu/all` 產生。
  */
 const routes: RouteRecordRaw[] = [
   // 訂單
@@ -162,7 +163,7 @@ const routes: RouteRecordRaw[] = [
         path: '/settings/super-admin',
       },
     ],
-    meta: { icon: 'lucide:cog', order: 5, title: '設定' },
+    meta: { icon: 'lucide:cog', order: 6, title: '設定' },
     name: 'Settings',
     path: '/settings',
   },

@@ -6,13 +6,14 @@ import type {
 import { generateAccessible } from '@vben/access';
 import { preferences } from '@vben/preferences';
 
+import { getAllMenusApi } from '#/api/core/menu';
 import { BasicLayout, IFrameView } from '#/layouts';
 
 const forbiddenComponent = () => import('#/views/_core/fallback/forbidden.vue');
 
 /**
- * Frontend access mode（見 preferences.ts）— menu / routes 由 routes/modules/*.ts
- * 推導，不打後端 /menu/all。Firebase claims.rule 已寫進 userStore.userInfo.roles。
+ * Backend access mode（見 preferences.ts）— Yumie menu / access routes
+ * are returned by yumie-backend /menu/all.
  */
 async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   const pageMap: ComponentRecordType = import.meta.glob('../views/**/*.vue');
@@ -24,7 +25,7 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
 
   return await generateAccessible(preferences.app.accessMode, {
     ...options,
-    fetchMenuListAsync: async () => [],
+    fetchMenuListAsync: getAllMenusApi,
     forbiddenComponent,
     layoutMap,
     pageMap,
