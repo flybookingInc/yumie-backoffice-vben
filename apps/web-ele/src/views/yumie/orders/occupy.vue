@@ -33,9 +33,9 @@ interface TimeGroupRow {
 type TableRow = Order | TimeGroupRow;
 
 interface OrderLoyaltyDisplayState {
-  intent?: {
-    redeemAmount?: number | string | null;
-  } | null;
+  intent?: null | {
+    redeemAmount?: null | number | string;
+  };
 }
 
 const hotelStore = useHotelStore();
@@ -63,7 +63,7 @@ const showLoyaltyColumns = computed(
 const tableColumnCount = computed(() => (showLoyaltyColumns.value ? 11 : 8));
 
 const groupedRows = computed<TableRow[]>(() => {
-  const sortedRows = [...rows.value].sort((a, b) => {
+  const sortedRows = [...rows.value].toSorted((a, b) => {
     const timeCompare = orderTime(a).localeCompare(orderTime(b));
     if (timeCompare !== 0) return timeCompare;
     return (a.qkNumber ?? '').localeCompare(b.qkNumber ?? '');
@@ -172,7 +172,7 @@ function formatDiscount(row: Order): string {
   const loyalty = row.loyalty as null | OrderLoyaltyDisplayState | undefined;
   const raw = loyalty?.intent?.redeemAmount;
   const amount =
-    typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : 0;
+    typeof raw === 'number' ? raw : (typeof raw === 'string' ? Number(raw) : 0);
   return Number.isFinite(amount) && amount > 0
     ? `NT$ ${amount.toLocaleString('zh-TW')}`
     : '-';
@@ -252,196 +252,198 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
           :row-class-name="tableRowClassName"
           :span-method="spanMethod"
         >
-        <ElTableColumn
-          label="時段"
-          prop="checkInTime"
-          width="80"
-          align="center"
-        >
-          <template #default="{ row }">
-            <span v-if="isTimeGroupRow(row as TableRow)" class="time-group">
-              {{ (row as TimeGroupRow).time }} ({{
-                (row as TimeGroupRow).count
-              }})
-            </span>
-            <span v-else>{{ orderTime(row as Order) }}</span>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="號碼" width="120" align="center">
-          <template #default="{ row }">
-            <template v-if="!isTimeGroupRow(row as TableRow)">
-              <span>{{ (row as Order).qkNumber ?? '-' }}</span>
-            </template>
-            <ElTag
-              v-if="
-                !isTimeGroupRow(row as TableRow) &&
-                (row as Order).qkNumber &&
-                duplicateQkNumbers.has((row as Order).qkNumber!)
-              "
-              size="small"
-              type="warning"
-              style="margin-left: 4px"
-              title="重複號碼"
-            >
-              重複
-            </ElTag>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="方案" prop="planName" min-width="200">
-          <template #default="{ row }">
-            <span v-if="!isTimeGroupRow(row as TableRow)">
-              {{ (row as Order).planName ?? '-' }}
-            </span>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="時間" width="100" align="center">
-          <template #default="{ row }">
-            <span v-if="!isTimeGroupRow(row as TableRow)">
-              {{ hoursLabel((row as Order).reservedMinutes) }}
-            </span>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="到付" width="120" align="right">
-          <template #default="{ row }">
-            <span v-if="!isTimeGroupRow(row as TableRow)">
-              {{ formatPrice((row as Order).priceRemaining) }}
-            </span>
-          </template>
-        </ElTableColumn>
-
-        <template v-if="showLoyaltyColumns">
-          <ElTableColumn label="等級" width="80" align="center">
+          <ElTableColumn
+            label="時段"
+            prop="checkInTime"
+            width="80"
+            align="center"
+          >
             <template #default="{ row }">
-              <span v-if="!isTimeGroupRow(row as TableRow)">
-                {{
-                  (
-                    (row as Order).membershipBenefit as
-                      | { levelCode?: string }
-                      | undefined
-                  )?.levelCode ?? '-'
-                }}
+              <span v-if="isTimeGroupRow(row as TableRow)" class="time-group">
+                {{ (row as TimeGroupRow).time }} ({{
+                  (row as TimeGroupRow).count
+                }})
               </span>
+              <span v-else>{{ orderTime(row as Order) }}</span>
             </template>
           </ElTableColumn>
-          <ElTableColumn label="加贈" width="80" align="center">
+          <ElTableColumn label="號碼" width="120" align="center">
             <template #default="{ row }">
-              <span v-if="!isTimeGroupRow(row as TableRow)">
-                {{
-                  (
-                    (row as Order).membershipBenefit as
-                      | { freeRestMinutes?: number }
-                      | undefined
-                  )?.freeRestMinutes ?? 0
-                }}
-                分
-              </span>
-            </template>
-          </ElTableColumn>
-          <ElTableColumn label="折抵" width="55" align="center">
-            <template #default="{ row }">
-              <span v-if="!isTimeGroupRow(row as TableRow)">
-                {{ formatDiscount(row as Order) }}
-              </span>
-            </template>
-          </ElTableColumn>
-        </template>
-
-        <ElTableColumn
-          label="電話"
-          prop="guestPhone"
-          width="160"
-          align="center"
-        >
-          <template #default="{ row }">
-            <template v-if="!isTimeGroupRow(row as TableRow)">
-              <span>{{ (row as Order).guestPhone || '-' }}</span>
-            </template>
-            <ElTag
-              v-if="
-                !isTimeGroupRow(row as TableRow) &&
-                (row as Order).guestPhone &&
-                duplicatePhones.has((row as Order).guestPhone)
-              "
-              size="small"
-              type="warning"
-              style="margin-left: 4px"
-              title="重複電話"
-            >
-              重複
-            </ElTag>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="加購" width="100" align="center">
-          <template #default="{ row }">
-            <ElTooltip
-              v-if="
-                !isTimeGroupRow(row as TableRow) &&
-                (row as Order).extraBuy.items.length > 0
-              "
-              :content="extraBuyDisplay((row as Order).extraBuy.items)"
-              placement="top"
-            >
-              <ElTag size="small" type="info">
-                {{ (row as Order).extraBuy.items.length }} 件
+              <template v-if="!isTimeGroupRow(row as TableRow)">
+                <span>{{ (row as Order).qkNumber ?? '-' }}</span>
+              </template>
+              <ElTag
+                v-if="
+                  !isTimeGroupRow(row as TableRow) &&
+                  (row as Order).qkNumber &&
+                  duplicateQkNumbers.has((row as Order).qkNumber!)
+                "
+                size="small"
+                type="warning"
+                style="margin-left: 4px"
+                title="重複號碼"
+              >
+                重複
               </ElTag>
-            </ElTooltip>
-            <span
-              v-else-if="!isTimeGroupRow(row as TableRow)"
-              style="color: #888"
-            >
-              -
-            </span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="方案" prop="planName" min-width="200">
+            <template #default="{ row }">
+              <span v-if="!isTimeGroupRow(row as TableRow)">
+                {{ (row as Order).planName ?? '-' }}
+              </span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="時間" width="100" align="center">
+            <template #default="{ row }">
+              <span v-if="!isTimeGroupRow(row as TableRow)">
+                {{ hoursLabel((row as Order).reservedMinutes) }}
+              </span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="到付" width="120" align="right">
+            <template #default="{ row }">
+              <span v-if="!isTimeGroupRow(row as TableRow)">
+                {{ formatPrice((row as Order).priceRemaining) }}
+              </span>
+            </template>
+          </ElTableColumn>
+
+          <template v-if="showLoyaltyColumns">
+            <ElTableColumn label="等級" width="80" align="center">
+              <template #default="{ row }">
+                <span v-if="!isTimeGroupRow(row as TableRow)">
+                  {{
+                    (
+                      (row as Order).membershipBenefit as
+                        | { levelCode?: string }
+                        | undefined
+                    )?.levelCode ?? '-'
+                  }}
+                </span>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="加贈" width="80" align="center">
+              <template #default="{ row }">
+                <span v-if="!isTimeGroupRow(row as TableRow)">
+                  {{
+                    (
+                      (row as Order).membershipBenefit as
+                        | { freeRestMinutes?: number }
+                        | undefined
+                    )?.freeRestMinutes ?? 0
+                  }}
+                  分
+                </span>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="折抵" width="55" align="center">
+              <template #default="{ row }">
+                <span v-if="!isTimeGroupRow(row as TableRow)">
+                  {{ formatDiscount(row as Order) }}
+                </span>
+              </template>
+            </ElTableColumn>
           </template>
-        </ElTableColumn>
-        <ElTableColumn label="狀態" width="240" align="center">
-          <template #default="{ row }">
-            <template v-if="isTimeGroupRow(row as TableRow)" />
-            <template v-else-if="(row as Order).status === 'Canceled'">
-              <ElTag type="info" size="small">取消</ElTag>
-            </template>
-            <template v-else-if="(row as Order).status === 'CanceledByAdmin'">
-              <ElTag type="danger" size="small">取消(業者)</ElTag>
-            </template>
-            <template v-else-if="(row as Order).status === 'NoShow'">
-              <ElTag type="warning" size="small">No Show</ElTag>
-            </template>
-            <template v-else-if="(row as Order).status === '抵達'">
-              <ElTag type="success" size="small">抵達</ElTag>
-            </template>
-            <template v-else>
-              <ElPopconfirm
-                title="確定標記為抵達？"
-                confirm-button-text="標記"
-                cancel-button-text="返回"
-                @confirm="markArrived(row as Order)"
+
+          <ElTableColumn
+            label="電話"
+            prop="guestPhone"
+            width="160"
+            align="center"
+          >
+            <template #default="{ row }">
+              <template v-if="!isTimeGroupRow(row as TableRow)">
+                <span>{{ (row as Order).guestPhone || '-' }}</span>
+              </template>
+              <ElTag
+                v-if="
+                  !isTimeGroupRow(row as TableRow) &&
+                  (row as Order).guestPhone &&
+                  duplicatePhones.has((row as Order).guestPhone)
+                "
+                size="small"
+                type="warning"
+                style="margin-left: 4px"
+                title="重複電話"
               >
-                <template #reference>
-                  <ElButton size="small" type="primary" link>抵達</ElButton>
-                </template>
-              </ElPopconfirm>
-              <ElPopconfirm
-                title="確定取消此訂單？"
-                confirm-button-text="取消訂單"
-                cancel-button-text="返回"
-                @confirm="cancel(row as Order)"
-              >
-                <template #reference>
-                  <ElButton size="small" type="danger" link>取消</ElButton>
-                </template>
-              </ElPopconfirm>
-              <ElPopconfirm
-                title="確定標記為 No Show？"
-                confirm-button-text="標記"
-                cancel-button-text="返回"
-                @confirm="markNoShow(row as Order)"
-              >
-                <template #reference>
-                  <ElButton size="small" type="warning" link>No Show</ElButton>
-                </template>
-              </ElPopconfirm>
+                重複
+              </ElTag>
             </template>
-          </template>
-        </ElTableColumn>
+          </ElTableColumn>
+          <ElTableColumn label="加購" width="100" align="center">
+            <template #default="{ row }">
+              <ElTooltip
+                v-if="
+                  !isTimeGroupRow(row as TableRow) &&
+                  (row as Order).extraBuy.items.length > 0
+                "
+                :content="extraBuyDisplay((row as Order).extraBuy.items)"
+                placement="top"
+              >
+                <ElTag size="small" type="info">
+                  {{ (row as Order).extraBuy.items.length }} 件
+                </ElTag>
+              </ElTooltip>
+              <span
+                v-else-if="!isTimeGroupRow(row as TableRow)"
+                style="color: #888"
+              >
+                -
+              </span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="狀態" width="240" align="center">
+            <template #default="{ row }">
+              <template v-if="isTimeGroupRow(row as TableRow)"></template>
+              <template v-else-if="(row as Order).status === 'Canceled'">
+                <ElTag type="info" size="small">取消</ElTag>
+              </template>
+              <template v-else-if="(row as Order).status === 'CanceledByAdmin'">
+                <ElTag type="danger" size="small">取消(業者)</ElTag>
+              </template>
+              <template v-else-if="(row as Order).status === 'NoShow'">
+                <ElTag type="warning" size="small">No Show</ElTag>
+              </template>
+              <template v-else-if="(row as Order).status === '抵達'">
+                <ElTag type="success" size="small">抵達</ElTag>
+              </template>
+              <template v-else>
+                <ElPopconfirm
+                  title="確定標記為抵達？"
+                  confirm-button-text="標記"
+                  cancel-button-text="返回"
+                  @confirm="markArrived(row as Order)"
+                >
+                  <template #reference>
+                    <ElButton size="small" type="primary" link>抵達</ElButton>
+                  </template>
+                </ElPopconfirm>
+                <ElPopconfirm
+                  title="確定取消此訂單？"
+                  confirm-button-text="取消訂單"
+                  cancel-button-text="返回"
+                  @confirm="cancel(row as Order)"
+                >
+                  <template #reference>
+                    <ElButton size="small" type="danger" link>取消</ElButton>
+                  </template>
+                </ElPopconfirm>
+                <ElPopconfirm
+                  title="確定標記為 No Show？"
+                  confirm-button-text="標記"
+                  cancel-button-text="返回"
+                  @confirm="markNoShow(row as Order)"
+                >
+                  <template #reference>
+                    <ElButton size="small" type="warning" link>
+No Show
+</ElButton>
+                  </template>
+                </ElPopconfirm>
+              </template>
+            </template>
+          </ElTableColumn>
         </ElTable>
       </div>
     </ElCard>
@@ -459,6 +461,7 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
 
 :deep(.order-time-group-row) {
   --el-table-tr-bg-color: #e7e7e7;
+
   font-weight: 700;
 }
 
@@ -474,8 +477,8 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
 
 .time-group {
   display: inline-flex;
-  color: var(--el-text-color-primary);
   font-size: 14px;
   line-height: 24px;
+  color: var(--el-text-color-primary);
 }
 </style>

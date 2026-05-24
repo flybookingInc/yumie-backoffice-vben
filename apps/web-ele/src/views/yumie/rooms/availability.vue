@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { YumiePlan } from '#/composables/usePlansSnapshot';
 
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import {
   ElButton,
@@ -96,6 +96,85 @@ const activeDirty = computed(() =>
 const activeEnabledCount = computed(
   () => Object.values(activeDraft.value).filter((v) => v === true).length,
 );
+
+/* ============================ Shift-Click 範圍選取 + 批次勾選 ============================ */
+const slotGridColumns = 8;
+const rangeAnchor = ref<null | { index: number }>(null);
+const selectedSlots = ref<Set<string>>(new Set());
+const rangeFillValue = ref<boolean>(true);
+
+function isSlotSelected(slot: string): boolean {
+  return selectedSlots.value.has(slot);
+}
+
+function selectSlotRange(fromIndex: number, toIndex: number): void {
+  const fromRow = Math.floor(fromIndex / slotGridColumns);
+  const fromCol = fromIndex % slotGridColumns;
+  const toRow = Math.floor(toIndex / slotGridColumns);
+  const toCol = toIndex % slotGridColumns;
+  const minRow = Math.min(fromRow, toRow);
+  const maxRow = Math.max(fromRow, toRow);
+  const minCol = Math.min(fromCol, toCol);
+  const maxCol = Math.max(fromCol, toCol);
+  const next = new Set<string>();
+
+  for (let row = minRow; row <= maxRow; row++) {
+    for (let col = minCol; col <= maxCol; col++) {
+      const slot = slotKeys.value[row * slotGridColumns + col];
+      if (slot) next.add(slot);
+    }
+  }
+  selectedSlots.value = next;
+}
+
+function onSlotMouseDown(slot: string, e: MouseEvent): void {
+  const index = slotKeys.value.indexOf(slot);
+  if (index === -1) return;
+
+  if (e.shiftKey && rangeAnchor.value) {
+    e.preventDefault();
+    selectSlotRange(rangeAnchor.value.index, index);
+    return;
+  }
+
+  rangeAnchor.value = { index };
+  selectedSlots.value = new Set([slot]);
+}
+
+function clearRangeSelection(): void {
+  rangeAnchor.value = null;
+  selectedSlots.value = new Set();
+}
+
+function applyRangeFill(): void {
+  if (!activePlanId.value || selectedSlots.value.size < 2) return;
+  const draft = drafts.value[activePlanId.value];
+  if (!draft) return;
+  for (const slot of selectedSlots.value) {
+    draft[slot] = rangeFillValue.value;
+  }
+  ElMessage.success(
+    `已${rangeFillValue.value ? '勾選' : '取消勾選'} ${selectedSlots.value.size} 格`,
+  );
+  clearRangeSelection();
+}
+
+function onKeyDown(e: KeyboardEvent): void {
+  if (e.key === 'Escape' && selectedSlots.value.size > 0) {
+    clearRangeSelection();
+  }
+}
+
+watch(activePlanId, () => {
+  clearRangeSelection();
+});
+
+onMounted(() => {
+  document.addEventListener('keydown', onKeyDown);
+});
+onUnmounted(() => {
+  document.removeEventListener('keydown', onKeyDown);
+});
 
 function toggleSlot(planId: string, slot: string): void {
   const draft = drafts.value[planId];
@@ -267,21 +346,51 @@ async function applyBatch(): Promise<void> {
             </ElSpace>
 
             <div class="slot-grid">
-              <ElCheckbox
+              <div
                 v-for="slot in slotKeys"
                 :key="slot"
-                :model-value="activeDraft[slot] === true"
-                :label="slot"
-                border
-                size="small"
-                class="slot-checkbox"
-                @change="toggleSlot(plan.id, slot)"
-              />
+                class="slot-cell"
+                :class="{ 'slot-cell--selected': isSlotSelected(slot) }"
+                @mousedown.capture="onSlotMouseDown(slot, $event)"
+              >
+                <ElCheckbox
+                  :model-value="activeDraft[slot] === true"
+                  :label="slot"
+                  border
+                  size="small"
+                  class="slot-checkbox"
+                  @change="toggleSlot(plan.id, slot)"
+                />
+              </div>
+            </div>
+
+            <div class="slot-tip">
+              批次勾選：點一格設為起點 →
+              <kbd>Shift</kbd> + 點另一格選取矩形範圍 →
+              底部工具列選擇勾選/不勾選後套用。
+              <kbd>Esc</kbd> 取消選取。
             </div>
           </div>
         </ElTabPane>
       </ElTabs>
     </ElCard>
+
+    <Teleport to="body">
+      <div v-if="selectedSlots.size > 1" class="slot-range-bar">
+        <span class="slot-range-bar__count">
+          已選 <strong>{{ selectedSlots.size }}</strong> 格
+        </span>
+        <ElRadioGroup v-model="rangeFillValue" size="small">
+          <ElRadio :value="true">勾選</ElRadio>
+          <ElRadio :value="false">不勾選</ElRadio>
+        </ElRadioGroup>
+        <ElButton type="primary" size="small" @click="applyRangeFill">
+          套用
+        </ElButton>
+        <ElButton size="small" @click="clearRangeSelection">清除</ElButton>
+        <span class="slot-range-bar__hint">Esc 取消</span>
+      </div>
+    </Teleport>
 
     <ElDialog
       v-model="batchOpen"
@@ -358,6 +467,42 @@ async function applyBatch(): Promise<void> {
 
 .slot-checkbox {
   margin-right: 0;
+  width: 100%;
+}
+
+.slot-cell {
+  padding: 1px;
+  user-select: none;
+  border-radius: 4px;
+  transition: box-shadow 0.12s ease;
+}
+
+.slot-cell--selected {
+  background-color: var(--el-color-primary-light-9);
+  box-shadow: inset 0 0 0 2px var(--el-color-primary);
+}
+
+.slot-tip {
+  padding: 6px 10px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  background-color: var(--el-fill-color-light);
+  border-left: 3px solid var(--el-color-primary);
+  border-radius: 4px;
+}
+
+.slot-tip kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  margin: 0 2px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 11px;
+  color: var(--el-text-color-primary);
+  background-color: var(--el-bg-color);
+  border: 1px solid var(--el-border-color);
+  border-bottom-width: 2px;
+  border-radius: 3px;
 }
 
 .batch-section-title {
@@ -392,5 +537,34 @@ async function applyBatch(): Promise<void> {
 .batch-slot-label {
   width: 56px;
   font-variant-numeric: tabular-nums;
+}
+</style>
+
+<style>
+.slot-range-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 2000;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 16px;
+  font-size: 13px;
+  background-color: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color);
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 15%);
+  transform: translateX(-50%);
+}
+
+.slot-range-bar__count {
+  color: var(--el-text-color-primary);
+}
+
+.slot-range-bar__hint {
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
 }
 </style>
