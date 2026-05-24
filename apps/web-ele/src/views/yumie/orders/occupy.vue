@@ -23,6 +23,21 @@ import { useHotelStore } from '#/store/hotel';
 
 defineOptions({ name: 'OrdersOccupyPage' });
 
+interface TimeGroupRow {
+  __type: 'time-group';
+  count: number;
+  id: string;
+  time: string;
+}
+
+type TableRow = Order | TimeGroupRow;
+
+interface OrderLoyaltyDisplayState {
+  intent?: {
+    redeemAmount?: number | string | null;
+  } | null;
+}
+
 const hotelStore = useHotelStore();
 const userStore = useUserStore();
 
@@ -45,6 +60,37 @@ const isSuperAdmin = computed(
 const showLoyaltyColumns = computed(
   () => loyaltyEnabled.value || isSuperAdmin.value,
 );
+const tableColumnCount = computed(() => (showLoyaltyColumns.value ? 11 : 8));
+
+const groupedRows = computed<TableRow[]>(() => {
+  const sortedRows = [...rows.value].sort((a, b) => {
+    const timeCompare = orderTime(a).localeCompare(orderTime(b));
+    if (timeCompare !== 0) return timeCompare;
+    return (a.qkNumber ?? '').localeCompare(b.qkNumber ?? '');
+  });
+  const counts = new Map<string, number>();
+  for (const row of sortedRows) {
+    const time = orderTime(row);
+    counts.set(time, (counts.get(time) ?? 0) + 1);
+  }
+
+  const result: TableRow[] = [];
+  let previousTime = '';
+  for (const row of sortedRows) {
+    const time = orderTime(row);
+    if (time !== previousTime) {
+      result.push({
+        __type: 'time-group',
+        count: counts.get(time) ?? 0,
+        id: `time-group-${time}`,
+        time,
+      });
+      previousTime = time;
+    }
+    result.push(row);
+  }
+  return result;
+});
 
 /** 偵測重複的 qkNumber / phone — 對齊舊版警告 icon 邏輯 */
 const duplicateQkNumbers = computed(() => {
@@ -122,6 +168,16 @@ function formatPrice(n: number): string {
   return n > 0 ? `NT$ ${n.toLocaleString('zh-TW')}` : '-';
 }
 
+function formatDiscount(row: Order): string {
+  const loyalty = row.loyalty as null | OrderLoyaltyDisplayState | undefined;
+  const raw = loyalty?.intent?.redeemAmount;
+  const amount =
+    typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : 0;
+  return Number.isFinite(amount) && amount > 0
+    ? `NT$ ${amount.toLocaleString('zh-TW')}`
+    : '-';
+}
+
 function extraBuyDisplay(items: ExtraBuyItem[]): string {
   if (!items?.length) return '-';
   return items
@@ -129,6 +185,33 @@ function extraBuyDisplay(items: ExtraBuyItem[]): string {
       (it) => `${it.itemName ?? ''} $${it.itemPrice ?? 0} × ${it.itemAmt ?? 0}`,
     )
     .join('\n');
+}
+
+function isTimeGroupRow(row: TableRow): row is TimeGroupRow {
+  return (row as TimeGroupRow).__type === 'time-group';
+}
+
+function orderTime(row: Order): string {
+  return row.checkInTime || row.checkinDatetime?.slice(11, 16) || '-';
+}
+
+function rowKey(row: TableRow): string {
+  return row.id;
+}
+
+function tableRowClassName({ row }: { row: TableRow }): string {
+  return isTimeGroupRow(row) ? 'order-time-group-row' : '';
+}
+
+function spanMethod({
+  columnIndex,
+  row,
+}: {
+  columnIndex: number;
+  row: TableRow;
+}): [number, number] | undefined {
+  if (!isTimeGroupRow(row)) return undefined;
+  return columnIndex === 0 ? [1, tableColumnCount.value] : [0, 0];
 }
 
 watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
@@ -159,18 +242,39 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
         </div>
       </template>
 
-      <ElTable v-loading="loading" :data="rows" border row-key="id">
+      <div class="order-table-scroll">
+        <ElTable
+          v-loading="loading"
+          class="order-table"
+          :data="groupedRows"
+          border
+          :row-key="rowKey"
+          :row-class-name="tableRowClassName"
+          :span-method="spanMethod"
+        >
         <ElTableColumn
           label="時段"
           prop="checkInTime"
           width="80"
           align="center"
-        />
+        >
+          <template #default="{ row }">
+            <span v-if="isTimeGroupRow(row as TableRow)" class="time-group">
+              {{ (row as TimeGroupRow).time }} ({{
+                (row as TimeGroupRow).count
+              }})
+            </span>
+            <span v-else>{{ orderTime(row as Order) }}</span>
+          </template>
+        </ElTableColumn>
         <ElTableColumn label="號碼" width="120" align="center">
           <template #default="{ row }">
-            <span>{{ (row as Order).qkNumber ?? '-' }}</span>
+            <template v-if="!isTimeGroupRow(row as TableRow)">
+              <span>{{ (row as Order).qkNumber ?? '-' }}</span>
+            </template>
             <ElTag
               v-if="
+                !isTimeGroupRow(row as TableRow) &&
                 (row as Order).qkNumber &&
                 duplicateQkNumbers.has((row as Order).qkNumber!)
               "
@@ -183,40 +287,61 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
             </ElTag>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="方案" prop="planName" min-width="200" />
+        <ElTableColumn label="方案" prop="planName" min-width="200">
+          <template #default="{ row }">
+            <span v-if="!isTimeGroupRow(row as TableRow)">
+              {{ (row as Order).planName ?? '-' }}
+            </span>
+          </template>
+        </ElTableColumn>
         <ElTableColumn label="時間" width="100" align="center">
           <template #default="{ row }">
-            {{ hoursLabel((row as Order).reservedMinutes) }}
+            <span v-if="!isTimeGroupRow(row as TableRow)">
+              {{ hoursLabel((row as Order).reservedMinutes) }}
+            </span>
           </template>
         </ElTableColumn>
         <ElTableColumn label="到付" width="120" align="right">
           <template #default="{ row }">
-            {{ formatPrice((row as Order).priceRemaining) }}
+            <span v-if="!isTimeGroupRow(row as TableRow)">
+              {{ formatPrice((row as Order).priceRemaining) }}
+            </span>
           </template>
         </ElTableColumn>
 
         <template v-if="showLoyaltyColumns">
           <ElTableColumn label="等級" width="80" align="center">
             <template #default="{ row }">
-              {{
-                (
-                  (row as Order).membershipBenefit as
-                    | { levelCode?: string }
-                    | undefined
-                )?.levelCode ?? '-'
-              }}
+              <span v-if="!isTimeGroupRow(row as TableRow)">
+                {{
+                  (
+                    (row as Order).membershipBenefit as
+                      | { levelCode?: string }
+                      | undefined
+                  )?.levelCode ?? '-'
+                }}
+              </span>
             </template>
           </ElTableColumn>
           <ElTableColumn label="加贈" width="80" align="center">
             <template #default="{ row }">
-              {{
-                (
-                  (row as Order).membershipBenefit as
-                    | { freeRestMinutes?: number }
-                    | undefined
-                )?.freeRestMinutes ?? 0
-              }}
-              分
+              <span v-if="!isTimeGroupRow(row as TableRow)">
+                {{
+                  (
+                    (row as Order).membershipBenefit as
+                      | { freeRestMinutes?: number }
+                      | undefined
+                  )?.freeRestMinutes ?? 0
+                }}
+                分
+              </span>
+            </template>
+          </ElTableColumn>
+          <ElTableColumn label="折抵" width="55" align="center">
+            <template #default="{ row }">
+              <span v-if="!isTimeGroupRow(row as TableRow)">
+                {{ formatDiscount(row as Order) }}
+              </span>
             </template>
           </ElTableColumn>
         </template>
@@ -228,9 +353,12 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
           align="center"
         >
           <template #default="{ row }">
-            <span>{{ (row as Order).guestPhone || '-' }}</span>
+            <template v-if="!isTimeGroupRow(row as TableRow)">
+              <span>{{ (row as Order).guestPhone || '-' }}</span>
+            </template>
             <ElTag
               v-if="
+                !isTimeGroupRow(row as TableRow) &&
                 (row as Order).guestPhone &&
                 duplicatePhones.has((row as Order).guestPhone)
               "
@@ -246,7 +374,10 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
         <ElTableColumn label="加購" width="100" align="center">
           <template #default="{ row }">
             <ElTooltip
-              v-if="(row as Order).extraBuy.items.length > 0"
+              v-if="
+                !isTimeGroupRow(row as TableRow) &&
+                (row as Order).extraBuy.items.length > 0
+              "
               :content="extraBuyDisplay((row as Order).extraBuy.items)"
               placement="top"
             >
@@ -254,12 +385,18 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
                 {{ (row as Order).extraBuy.items.length }} 件
               </ElTag>
             </ElTooltip>
-            <span v-else style="color: #888">-</span>
+            <span
+              v-else-if="!isTimeGroupRow(row as TableRow)"
+              style="color: #888"
+            >
+              -
+            </span>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="狀態" width="240" align="center" fixed="right">
+        <ElTableColumn label="狀態" width="240" align="center">
           <template #default="{ row }">
-            <template v-if="(row as Order).status === 'Canceled'">
+            <template v-if="isTimeGroupRow(row as TableRow)" />
+            <template v-else-if="(row as Order).status === 'Canceled'">
               <ElTag type="info" size="small">取消</ElTag>
             </template>
             <template v-else-if="(row as Order).status === 'CanceledByAdmin'">
@@ -305,7 +442,40 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
             </template>
           </template>
         </ElTableColumn>
-      </ElTable>
+        </ElTable>
+      </div>
     </ElCard>
   </div>
 </template>
+
+<style scoped>
+.order-table-scroll {
+  overflow-x: auto;
+}
+
+.order-table {
+  min-width: 1335px;
+}
+
+:deep(.order-time-group-row) {
+  --el-table-tr-bg-color: #e7e7e7;
+  font-weight: 700;
+}
+
+:deep(.order-time-group-row:hover > td.el-table__cell) {
+  background-color: #cfcfcf !important;
+}
+
+:deep(.order-time-group-row .cell) {
+  justify-content: flex-start;
+  padding: 6px 16px;
+  text-align: left;
+}
+
+.time-group {
+  display: inline-flex;
+  color: var(--el-text-color-primary);
+  font-size: 14px;
+  line-height: 24px;
+}
+</style>
