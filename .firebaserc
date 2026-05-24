@@ -3,5 +3,12 @@
     "default": "yumie-test",
     "staging": "yumie-test",
     "production": "yumie-8e60e"
+  },
+  "targets": {
+    "yumie-8e60e": {
+      "hosting": {
+        "backoffice": ["yumie-backoffice"]
+      }
+    }
   }
 }
