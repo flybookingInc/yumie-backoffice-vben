@@ -104,8 +104,14 @@ const selectedPlan = computed<null | Plan>(() => {
 /** 依日期 + hotel.weekend 判斷是否為平日 / 周末 */
 const isWeekend = computed(() => {
   if (!form.checkInDate) return false;
-  const taipei = new Date(`${form.checkInDate}T00:00:00+08:00`);
-  const dayOfWeek = (taipei.getUTCDay() + 0) % 7; // 0=Sun
+  // 直接把 'YYYY-MM-DD' 當 calendar date 處理：用 Date.UTC 建出 UTC 午夜，再
+  // 讀 getUTCDay() 取到該日期當天（不論時區）的 day-of-week。
+  // 之前用 new Date('YYYY-MM-DDT00:00:00+08:00') + getUTCDay()，會被換算成
+  // UTC 前一天（例：2026-05-25 00:00+08 = 2026-05-24 16:00 UTC），getUTCDay
+  // 回前一天的星期 → 平日週一被誤判為週末。
+  const [y, m, d] = form.checkInDate.split('-').map(Number);
+  if (!y || !m || !d) return false;
+  const dayOfWeek = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
   const weekend = (currentHotelMeta.value?.weekend as number[] | undefined) ?? [
     0, 6,
   ];
@@ -155,7 +161,12 @@ async function loadPlans(): Promise<void> {
   try {
     const list = await plansApi.list({ hotelId });
     if (currentHotelId.value !== hotelId) return;
-    plans.value = list.filter((p) => !p.disable);
+    // 業者預約頁列出全部方案（含停售）— admin 可能臨時想用已停售方案補單。
+    // 排序：販售中優先（disable=false），停售中排後面。
+    plans.value = [...list].toSorted((a, b) => {
+      if (!!a.disable === !!b.disable) return 0;
+      return a.disable ? 1 : -1;
+    });
   } finally {
     plansLoading.value = false;
   }
