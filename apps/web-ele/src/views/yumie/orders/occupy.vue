@@ -62,6 +62,42 @@ const showLoyaltyColumns = computed(
 );
 const tableColumnCount = computed(() => (showLoyaltyColumns.value ? 11 : 8));
 
+/**
+ * 訂單統計：
+ *  - total = 全部訂單筆數
+ *  - actual = 實際訂單數 = total - 取消(客戶) - 取消(業者) - No Show
+ *    （等同 status 仍是 'OK' 或 '抵達' 的訂單數）
+ */
+const orderStats = computed(() => {
+  let canceled = 0;
+  let canceledByAdmin = 0;
+  let noShow = 0;
+  for (const r of rows.value) {
+    switch (r.status) {
+      case 'Canceled': {
+        canceled++;
+        break;
+      }
+      case 'CanceledByAdmin': {
+        canceledByAdmin++;
+        break;
+      }
+      case 'NoShow': {
+        noShow++;
+        break;
+      }
+    }
+  }
+  const total = rows.value.length;
+  return {
+    actual: total - canceled - canceledByAdmin - noShow,
+    canceled,
+    canceledByAdmin,
+    noShow,
+    total,
+  };
+});
+
 const groupedRows = computed<TableRow[]>(() => {
   const sortedRows = [...rows.value].toSorted((a, b) => {
     const timeCompare = orderTime(a).localeCompare(orderTime(b));
@@ -225,6 +261,36 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
           <span>
             列表 —
             {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}
+            <ElTag size="small" type="info" style="margin-left: 8px">
+              訂單 {{ orderStats.total }}
+            </ElTag>
+            <ElTag size="small" type="success" style="margin-left: 4px">
+              實際 {{ orderStats.actual }}
+            </ElTag>
+            <ElTag
+              v-if="orderStats.canceled > 0"
+              size="small"
+              type="info"
+              style="margin-left: 4px"
+            >
+              取消 {{ orderStats.canceled }}
+            </ElTag>
+            <ElTag
+              v-if="orderStats.canceledByAdmin > 0"
+              size="small"
+              type="danger"
+              style="margin-left: 4px"
+            >
+              取消(業者) {{ orderStats.canceledByAdmin }}
+            </ElTag>
+            <ElTag
+              v-if="orderStats.noShow > 0"
+              size="small"
+              type="warning"
+              style="margin-left: 4px"
+            >
+              No Show {{ orderStats.noShow }}
+            </ElTag>
           </span>
           <ElSpace>
             <ElDatePicker
