@@ -19,6 +19,7 @@ import {
 } from 'element-plus';
 
 import { ordersApi } from '#/api/orders';
+import { useOrdersSnapshot } from '#/composables/useOrdersSnapshot';
 import { useHotelStore } from '#/store/hotel';
 
 defineOptions({ name: 'OrdersOccupyPage' });
@@ -251,6 +252,10 @@ function spanMethod({
 }
 
 watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
+
+// Re-fetch from REST whenever Firestore orders collection changes (new order / cancellation).
+const { orders: _firestoreOrders } = useOrdersSnapshot();
+watch(_firestoreOrders, () => void load());
 </script>
 
 <template>
