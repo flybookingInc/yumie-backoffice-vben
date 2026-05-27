@@ -164,6 +164,21 @@ async function load(): Promise<void> {
   }
 }
 
+async function loadSilently(): Promise<void> {
+  const hotelId = currentHotelId.value;
+  if (!hotelId) return;
+  try {
+    const result = await ordersApi.list({
+      date: selectedDate.value,
+      hotelId,
+    });
+    if (currentHotelId.value !== hotelId) return;
+    rows.value = result;
+  } catch {
+    // 靜默失敗，不清空現有資料
+  }
+}
+
 async function markArrived(row: Order): Promise<void> {
   try {
     await ordersApi.updateStatus(row.id, '抵達');
@@ -255,7 +270,7 @@ watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
 
 // Re-fetch from REST whenever Firestore orders collection changes (new order / cancellation).
 const { orders: _firestoreOrders } = useOrdersSnapshot();
-watch(_firestoreOrders, () => void load());
+watch(_firestoreOrders, () => void loadSilently());
 </script>
 
 <template>
