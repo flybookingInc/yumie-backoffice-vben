@@ -5,6 +5,8 @@ import { computed, ref, watch } from 'vue';
 
 import { useUserStore } from '@vben/stores';
 
+import { useDebounceFn } from '@vueuse/core';
+
 import {
   ElButton,
   ElCard,
@@ -266,11 +268,32 @@ function spanMethod({
   return columnIndex === 0 ? [1, tableColumnCount.value] : [0, 0];
 }
 
-watch([currentHotelId, selectedDate], () => void load(), { immediate: true });
+// 只訂閱 selectedDate 當天的訂單，作為「當天訂單有異動」的即時訊號。
+const { orders: _firestoreOrders } = useOrdersSnapshot(selectedDate);
+const reloadSilentlyDebounced = useDebounceFn(() => void loadSilently(), 500);
 
-// Re-fetch from REST whenever Firestore orders collection changes (new order / cancellation).
-const { orders: _firestoreOrders } = useOrdersSnapshot();
-watch(_firestoreOrders, () => void loadSilently());
+// 單一抓取觸發點，避免初始雙抓：
+// - context（hotelId / date）變動 → load()（顯示 spinner、清空舊資料）。
+//   重新訂閱後 Firestore 必然回傳一次「首次 snapshot」，與 load() 重複，故抑制它。
+// - 之後的即時異動 → debounce 後 loadSilently()（不清空、不閃爍）。
+let suppressNextSnapshot = false;
+
+watch(
+  [currentHotelId, selectedDate],
+  () => {
+    suppressNextSnapshot = true;
+    void load();
+  },
+  { immediate: true },
+);
+
+watch(_firestoreOrders, () => {
+  if (suppressNextSnapshot) {
+    suppressNextSnapshot = false;
+    return;
+  }
+  void reloadSilentlyDebounced();
+});
 </script>
 
 <template>
