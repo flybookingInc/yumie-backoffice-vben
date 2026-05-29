@@ -1,11 +1,8 @@
 # CODE_MAP — Yumie Backoffice
 
-本專案是 [Vue Vben Admin](https://github.com/vbenjs/vue-vben-admin) monorepo 的客製版，
-為 **Yumie 旅館訂房後台**。實際開發與部署的 app 只有 **`apps/web-ele`**（Element Plus 版），
-串接 **Firebase Auth + Firestore（只讀）+ `/v2` REST 後端**。
+本專案是 [Vue Vben Admin](https://github.com/vbenjs/vue-vben-admin) monorepo 的客製版，為 **Yumie 旅館訂房後台**。實際開發與部署的 app 只有 **`apps/web-ele`**（Element Plus 版），串接 **Firebase Auth + Firestore（只讀）+ `/v2` REST 後端**。
 
-> Vben 上游的 `web-antd`、`packages/*`、`internal/*` 基本維持原樣，平常不動。
-> 客製內容幾乎全部集中在 `apps/web-ele/src`。先看這裡。
+> Vben 上游的 `web-antd`、`packages/*`、`internal/*` 基本維持原樣，平常不動。客製內容幾乎全部集中在 `apps/web-ele/src`。先看這裡。
 
 ---
 
@@ -27,13 +24,12 @@ yumie-backoffice-vben/
 ### 部署 / 環境
 
 | 環境 | Firebase project | 指令 | 說明 |
-|------|------------------|------|------|
+| --- | --- | --- | --- |
 | dev | yumie-test | `pnpm dev:ele`（port 5777） | 直連 yumie-test backend / functions emulator |
 | staging | yumie-test | `pnpm deploy:ele:staging` | 無 confirm |
 | production | yumie-8e60e (`yumie-backoffice`) | `pnpm deploy:prod` | 有 confirm prompt |
 
-環境變數在 `apps/web-ele/.env*`：`.env`（共用）、`.env.development`、`.env.staging`、`.env.production`。
-`VITE_GLOB_API_URL` 指向 `/v2` API，`VITE_FIREBASE_*` 為 Firebase config，`VITE_USE_APPCHECK` 控制 AppCheck（dev 關、prod 開）。
+環境變數在 `apps/web-ele/.env*`：`.env`（共用）、`.env.development`、`.env.staging`、`.env.production`。 `VITE_GLOB_API_URL` 指向 `/v2` API，`VITE_FIREBASE_*` 為 Firebase config，`VITE_USE_APPCHECK` 控制 AppCheck（dev 關、prod 開）。
 
 ---
 
@@ -64,8 +60,7 @@ src/
 
 1. 初始化元件 / 表單適配器（`adapter/component`、`adapter/form`）
 2. i18n、Pinia stores（namespace = `VITE_APP_NAMESPACE`）
-3. **`setupAuthListener()` + `await authReady`** — 必須在 router 載入前，
-   否則 route guard 會在 Firebase user 尚未 restore 時就跑（race）。
+3. **`setupAuthListener()` + `await authReady`** — 必須在 router 載入前，否則 route guard 會在 Firebase user 尚未 restore 時就跑（race）。
 4. 註冊權限指令、tippy、router、Motion plugin
 5. `app.mount('#app')`
 
@@ -76,7 +71,7 @@ src/
 整個前端的 auth / 資料存取邊界都在這四個檔。**請優先讀懂這裡**。
 
 | 檔案 | 職責 |
-|------|------|
+| --- | --- |
 | `init.ts` | 從 `import.meta.env` 讀 config，匯出 `firebaseApp` / `firebaseAuth` / `firestore` / `appCheck` |
 | `claims.ts` | 解析 Firebase custom claims：`rule`（`admin` \| `superAdmin`）、`hotelGroup: string[]`。**嚴格驗證**，缺欄位丟 `InvalidClaimsError`（半殘登入不通過） |
 | `auth-sync.ts` | Firebase Auth ↔ Vben store 同步。`setupAuthListener()`（掛 onIdTokenChanged）、`authReady`（首次 token 同步的 Promise，guard/request/login 全 await 它）、`syncFirebaseUserToStores(user)`（純同步函式） |
@@ -89,7 +84,7 @@ src/
 ## 5. `store/` — Pinia
 
 | Store | 內容 |
-|-------|------|
+| --- | --- |
 | `auth.ts` (`useAuthStore`) | `authLogin`（signInWithEmailAndPassword + 立即同步 store，不靠 callback 避免 race）、`logout`、`fetchUserInfo`。失敗時清 store + signOut；`InvalidClaimsError` 有專屬提示 |
 | `hotel.ts` (`useHotelStore`) | 多飯店切換單一資料源：`hotelGroup`（來自 claims）、`currentHotelId`（localStorage 持久化）、`currentHotelMeta`（`qk-list/{hotelId}` 的即時 snapshot）。`switchHotel()` / `setHotelGroup()` |
 
@@ -107,9 +102,7 @@ src/
 - Response 統一 `{ code, data, message }`，`successCode=0`
 - 401 → `useAuthStore().logout()`（**不**做 token refresh，Firebase SDK 自動 refresh）
 
-每個業務模組一個資料夾，慣例：`index.ts`（API 方法）+ `types.ts`（型別）。
-模組：`core`(auth/menu/user)、`orders`、`customers`、`extras`、`hotels`、`inventory`、
-`membership-benefits`、`memberships`(含 phone)、`plans`、`room-types`、`sms`、`users`。
+每個業務模組一個資料夾，慣例：`index.ts`（API 方法）+ `types.ts`（型別）。模組：`core`(auth/menu/user)、`orders`、`customers`、`extras`、`hotels`、`inventory`、 `membership-benefits`、`memberships`(含 phone)、`plans`、`room-types`、`sms`、`users`。
 
 範例（`api/orders/index.ts`）：`ordersApi.list()` / `.createByAdmin()` / `.updateStatus()`。
 
@@ -117,31 +110,25 @@ src/
 
 ## 7. `composables/` — Firestore 即時訂閱
 
-跟著 `hotelStore.currentHotelId` 自動重訂閱，component unmount 自動 unsubscribe。
-底層都用 `firestore-readonly.ts`（只讀）。
+跟著 `hotelStore.currentHotelId` 自動重訂閱，component unmount 自動 unsubscribe。底層都用 `firestore-readonly.ts`（只讀）。
 
 `useHotelDocSnapshot` · `useOrdersSnapshot` · `useAvailabilitySnapshot` · `useExtrasSnapshot` · `usePlansSnapshot`
 
-> 即時資料常是**原樣 raw**（snake_case / 加密電話）；正規化後的資料由 `/v2` GET 回傳，
-> view 通常用 v2 結果顯示、用 snapshot 觸發「新訂單/取消立即反映」。
+> 即時資料常是**原樣 raw**（snake_case / 加密電話）；正規化後的資料由 `/v2` GET 回傳，view 通常用 v2 結果顯示、用 snapshot 觸發「新訂單/取消立即反映」。
 
-`components/HotelDocSubscriber.vue`：在 BasicLayout 內 mount 一次，是 `qk-list/{hotelId}` 的**全域唯一**訂閱點，
-推進 `currentHotelMeta`，並在切到 loyalty 未啟用的飯店時把使用者踢離 requiresLoyalty 頁。
+`components/HotelDocSubscriber.vue`：在 BasicLayout 內 mount 一次，是 `qk-list/{hotelId}` 的**全域唯一**訂閱點，推進 `currentHotelMeta`，並在切到 loyalty 未啟用的飯店時把使用者踢離 requiresLoyalty 頁。
 
 ---
 
 ## 8. `router/` — 路由與權限
 
 | 檔案 | 內容 |
-|------|------|
+| --- | --- |
 | `routes/modules/yumie.ts` | 業務路由樹（1:1 對齊舊 navbar）。`meta.authority: ['superAdmin']` 限權；`meta.requiresLoyalty` 需飯店啟用會員 |
 | `access.ts` | `accessMode='backend'` — 選單由後端 `/v2/menu/all` 產生（`getAllMenusApi`），前端只提供 component/layout map |
 | `guard.ts` | 三道守衛：`CommonGuard`（進度條）、`AccessGuard`（await authReady → token 檢查 → 生成動態路由）、`LoyaltyGuard`（requiresLoyalty 且飯店未啟用會員 → 擋下，superAdmin 例外） |
 
-選單樹（見 `routes/modules/yumie.ts`）：
-`訂單`(occupy/booking)、`房況`(inventory/availability)、`加購`、
-`數據`(customers*/sms/sms-billing*)、`設定`(room-types/plans/hotel/membership-benefits†/users*/super-admin*)
-　　`*` = 限 superAdmin，`†` = requiresLoyalty。
+選單樹（見 `routes/modules/yumie.ts`）： `訂單`(occupy/booking)、`房況`(inventory/availability)、`加購`、 `數據`(customers*/sms/sms-billing*)、`設定`(room-types/plans/hotel/membership-benefits†/users*/super-admin*) 　　`*` = 限 superAdmin，`†` = requiresLoyalty。
 
 預設首頁 `/orders/occupy`（見 `preferences.ts` 與 `auth-sync.ADMIN_HOME`）。
 
@@ -150,8 +137,8 @@ src/
 ## 9. `views/yumie/` — 業務頁面
 
 | 路徑 | 頁面 |
-|------|------|
-| `orders/occupy.vue` | 訂單列表（即時，依日期分組）|
+| --- | --- |
+| `orders/occupy.vue` | 訂單列表（即時，依日期分組） |
 | `orders/booking.vue` | 手動建單（admin） |
 | `rooms/inventory.vue` · `rooms/availability.vue` | 房量 / 時段 |
 | `extras/index.vue` | 加購品項 |
@@ -159,18 +146,15 @@ src/
 | `settings/*` | room-types / plans / hotel / membership-benefits / users / super-admin |
 | `memberships/manual-upgrade.vue` | 會員手動升級 |
 
-頁面慣例：`<script setup>` + Element Plus 元件，從 `#/api/*` 取資料、`#/composables/*` 訂閱即時、
-`#/store/hotel` 取當前飯店。
+頁面慣例：`<script setup>` + Element Plus 元件，從 `#/api/*` 取資料、`#/composables/*` 訂閱即時、 `#/store/hotel` 取當前飯店。
 
 ---
 
 ## 10. 改動指南（常見任務）
 
-- **新增一個業務頁面**：在 `views/yumie/` 建 `.vue` → 在 `router/routes/modules/yumie.ts` 加 route
-  （注意後端 `/v2/menu/all` 也要回對應選單，否則 backend accessMode 下不顯示）。
+- **新增一個業務頁面**：在 `views/yumie/` 建 `.vue` → 在 `router/routes/modules/yumie.ts` 加 route（注意後端 `/v2/menu/all` 也要回對應選單，否則 backend accessMode 下不顯示）。
 - **新增一個 API 模組**：在 `api/<module>/` 建 `index.ts` + `types.ts`，用 `requestClient`（會自動帶 token + hotelId）。
-- **新增即時訂閱**：在 `firebase/firestore-readonly.ts` export 新的 `watchXxx`，再包一個 `composables/useXxxSnapshot.ts`。
-  **不要**直接在 view 裡 import `firebase/firestore`。
+- **新增即時訂閱**：在 `firebase/firestore-readonly.ts` export 新的 `watchXxx`，再包一個 `composables/useXxxSnapshot.ts`。 **不要**直接在 view 裡 import `firebase/firestore`。
 - **任何寫入**：呼叫 `/v2` REST，**不要**用 Firestore 寫 API。
 - **權限**：route 加 `meta.authority`（角色）或 `meta.requiresLoyalty`（飯店會員功能）。
 
