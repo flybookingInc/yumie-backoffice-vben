@@ -2,6 +2,7 @@
 import type { HotelDoc } from '#/api/hotels';
 
 import { computed, reactive, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { useUserStore } from '@vben/stores';
 
@@ -32,15 +33,137 @@ defineOptions({ name: 'SettingsHotelPage' });
 
 const hotelStore = useHotelStore();
 const userStore = useUserStore();
+const router = useRouter();
 
 const loading = ref(false);
 const saving = ref(false);
 const activeTab = ref('basic');
+const loyaltyToggling = ref(false);
+const loyaltyConfigLoading = ref(false);
+const loyaltyConfigSaving = ref(false);
+const loyaltyConfigTesting = ref(false);
+
+/**
+ * Loyalty config（cashbackCampaignId + refreshToken）跟 hotel doc 分開存，
+ * 由 /v2/hotels/:id/loyalty/config GET/PUT 處理。Refresh token 是 write-only：
+ * UI 只顯示「已設定 / 未設定」狀態，使用者輸入新值才送到後端。
+ */
+const loyaltyConfig = reactive({
+  cashbackCampaignId: '',
+  hasRefreshToken: false,
+  refreshToken: '', // form-only，永不從後端讀
+});
+
+/** 上次「測試 token」結果，給按鈕旁邊顯示綠/紅 tag */
+const lastTokenTest = ref<null | {
+  message: string;
+  ok: boolean;
+  testedAt: string;
+}>(null);
 
 const currentHotelId = computed(() => hotelStore.currentHotelId);
 const isSuperAdmin = computed(
   () => userStore.userInfo?.roles?.includes('superAdmin') === true,
 );
+
+/** 從 currentHotelMeta（HotelDocSubscriber 即時 onSnapshot）讀 loyalty 開關狀態 */
+const loyaltyEnabled = computed(
+  () => hotelStore.currentHotelMeta?.loyalty?.enabled === true,
+);
+
+async function onToggleLoyalty(next: boolean): Promise<void> {
+  const hotelId = currentHotelId.value;
+  if (!hotelId) return;
+  loyaltyToggling.value = true;
+  try {
+    await hotelsApi.toggleLoyalty(hotelId, next);
+    ElMessage.success(next ? '已啟用會員功能' : '已停用會員功能');
+    // currentHotelMeta 由 HotelDocSubscriber onSnapshot 自動更新，無需手動 reload
+  } finally {
+    loyaltyToggling.value = false;
+  }
+}
+
+/**
+ * ElSwitch :before-change hook — 阻止樂觀更新本地 UI；API 成功後 onSnapshot 把
+ * currentHotelMeta.loyalty.enabled 推回來，loyaltyEnabled computed 自動翻轉。
+ * 回 true = 允許 switch 視覺切換（但因為我們是用 :model-value 而非 v-model
+ * 雙向綁，這條 hook 只是用來觸發 onToggleLoyalty 的入口）。
+ */
+async function beforeLoyaltyChange(): Promise<boolean> {
+  await onToggleLoyalty(!loyaltyEnabled.value);
+  return true;
+}
+
+async function loadLoyaltyConfig(): Promise<void> {
+  const hotelId = currentHotelId.value;
+  if (!hotelId || !isSuperAdmin.value) return;
+  loyaltyConfigLoading.value = true;
+  try {
+    const cfg = await hotelsApi.getLoyaltyConfig(hotelId);
+    if (currentHotelId.value !== hotelId) return;
+    loyaltyConfig.cashbackCampaignId = cfg.cashbackCampaignId ?? '';
+    loyaltyConfig.hasRefreshToken = cfg.hasRefreshToken;
+    loyaltyConfig.refreshToken = '';
+  } finally {
+    loyaltyConfigLoading.value = false;
+  }
+}
+
+async function testLoyaltyConfig(): Promise<void> {
+  const hotelId = currentHotelId.value;
+  if (!hotelId) return;
+  loyaltyConfigTesting.value = true;
+  try {
+    const result = await hotelsApi.testLoyaltyConfig(hotelId);
+    lastTokenTest.value = {
+      message: result.message,
+      ok: result.ok,
+      testedAt: new Date().toLocaleTimeString('zh-TW', {
+        hour: '2-digit',
+        hour12: false,
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'Asia/Taipei',
+      }),
+    };
+    if (result.ok) {
+      ElMessage.success(result.message);
+    } else {
+      ElMessage.error(`Token 無效：${result.message}`);
+    }
+  } finally {
+    loyaltyConfigTesting.value = false;
+  }
+}
+
+async function saveLoyaltyConfig(): Promise<void> {
+  const hotelId = currentHotelId.value;
+  if (!hotelId) return;
+  loyaltyConfigSaving.value = true;
+  try {
+    const payload: { cashbackCampaignId?: null | string; refreshToken?: string } =
+      {
+        // 清空字串 → null（明確清掉舊值）；非空 → 寫入
+        cashbackCampaignId: loyaltyConfig.cashbackCampaignId.trim() || null,
+      };
+    const newToken = loyaltyConfig.refreshToken.trim();
+    if (newToken) payload.refreshToken = newToken;
+
+    const updated = await hotelsApi.updateLoyaltyConfig(hotelId, payload);
+    loyaltyConfig.cashbackCampaignId = updated.cashbackCampaignId ?? '';
+    loyaltyConfig.hasRefreshToken = updated.hasRefreshToken;
+    loyaltyConfig.refreshToken = ''; // clear input after save
+    lastTokenTest.value = null; // 新 token 還沒驗證，清掉舊測試結果
+    ElMessage.success('Loyalty 設定已儲存');
+  } finally {
+    loyaltyConfigSaving.value = false;
+  }
+}
+
+function goToMembershipBenefits(): void {
+  router.push('/settings/membership-benefits');
+}
 
 const WEEKDAYS = [
   { label: '日', value: 0 },
@@ -237,6 +360,8 @@ async function load(): Promise<void> {
     const doc = await hotelsApi.get(hotelId);
     if (currentHotelId.value !== hotelId) return;
     hydrate(doc);
+    // Loyalty config 跟 hotel doc 分開 fetch（separate Firestore doc 且只給 superAdmin）
+    void loadLoyaltyConfig();
   } finally {
     loading.value = false;
   }
@@ -523,6 +648,133 @@ function onCoverDragEnd(): void {
               />
             </ElFormItem>
           </ElForm>
+        </ElTabPane>
+
+        <ElTabPane v-if="isSuperAdmin" label="會員" name="loyalty">
+          <ElTag size="small" type="info" style="margin-bottom: 16px">
+            superAdmin only
+          </ElTag>
+          <ElCard shadow="never" style="margin-bottom: 16px">
+            <template #header>
+              <div class="flex items-center justify-between">
+                <span>會員功能總開關</span>
+                <ElTag
+                  :type="loyaltyEnabled ? 'success' : 'info'"
+                  size="small"
+                >
+                  {{ loyaltyEnabled ? '已啟用' : '已停用' }}
+                </ElTag>
+              </div>
+            </template>
+            <ElForm label-width="160" @submit.prevent>
+              <ElFormItem label="啟用會員系統">
+                <ElSwitch
+                  :model-value="loyaltyEnabled"
+                  :loading="loyaltyToggling"
+                  :before-change="beforeLoyaltyChange"
+                />
+                <div class="form-hint" style="margin-left: 12px">
+                  啟用後此飯店的訂單會走 Yumie 會員流程：點數折抵、等級加贈、
+                  Yumie 金回饋等。停用則本飯店不接受會員相關行為。
+                </div>
+              </ElFormItem>
+              <ElFormItem label="會員等級福利設定">
+                <ElButton
+                  type="primary"
+                  link
+                  :disabled="!loyaltyEnabled"
+                  @click="goToMembershipBenefits"
+                >
+                  前往「會員等級福利」設定 →
+                </ElButton>
+                <div class="form-hint" style="margin-left: 12px">
+                  GO / PRO / ELITE 三級福利規則 + maxRedeemRatio（最高折抵比例）
+                </div>
+              </ElFormItem>
+            </ElForm>
+          </ElCard>
+
+          <ElCard
+            v-loading="loyaltyConfigLoading"
+            shadow="never"
+          >
+            <template #header>
+              <div class="flex items-center justify-between">
+                <span>Loyalty 旅館設定</span>
+                <ElTag
+                  :type="loyaltyConfig.hasRefreshToken ? 'success' : 'warning'"
+                  size="small"
+                >
+                  {{
+                    loyaltyConfig.hasRefreshToken
+                      ? 'refreshToken 已設定'
+                      : 'refreshToken 尚未設定'
+                  }}
+                </ElTag>
+              </div>
+            </template>
+            <ElForm label-width="200" @submit.prevent>
+              <ElFormItem label="Cashback Campaign ID">
+                <ElInput
+                  v-model="loyaltyConfig.cashbackCampaignId"
+                  placeholder="輸入 Campaign ID（留空清除）"
+                  clearable
+                />
+              </ElFormItem>
+              <ElFormItem label="Seller Refresh Token">
+                <ElInput
+                  v-model="loyaltyConfig.refreshToken"
+                  type="password"
+                  show-password
+                  :placeholder="
+                    loyaltyConfig.hasRefreshToken
+                      ? '已設定（留空表示不變更）'
+                      : '尚未設定'
+                  "
+                />
+                <div
+                  v-if="!loyaltyConfig.hasRefreshToken"
+                  class="form-hint"
+                  style="margin-left: 12px; color: var(--el-color-warning)"
+                >
+                  尚未設定 refresh token，Loyalty 功能將無法運作。
+                </div>
+              </ElFormItem>
+              <ElFormItem>
+                <ElSpace>
+                  <ElButton
+                    type="primary"
+                    :loading="loyaltyConfigSaving"
+                    @click="saveLoyaltyConfig"
+                  >
+                    儲存 Loyalty 設定
+                  </ElButton>
+                  <ElButton
+                    :loading="loyaltyConfigTesting"
+                    :disabled="!loyaltyConfig.hasRefreshToken"
+                    @click="testLoyaltyConfig"
+                  >
+                    測試 token
+                  </ElButton>
+                  <ElTag
+                    v-if="lastTokenTest"
+                    :type="lastTokenTest.ok ? 'success' : 'danger'"
+                    size="small"
+                  >
+                    {{ lastTokenTest.ok ? '✓ 有效' : '✗ 失效' }} ·
+                    {{ lastTokenTest.testedAt }}
+                  </ElTag>
+                </ElSpace>
+                <div
+                  v-if="lastTokenTest && !lastTokenTest.ok"
+                  class="form-hint"
+                  style="margin-top: 4px; color: var(--el-color-danger)"
+                >
+                  {{ lastTokenTest.message }}
+                </div>
+              </ElFormItem>
+            </ElForm>
+          </ElCard>
         </ElTabPane>
 
         <ElTabPane v-if="isSuperAdmin" label="第三方 PMS" name="pms">
