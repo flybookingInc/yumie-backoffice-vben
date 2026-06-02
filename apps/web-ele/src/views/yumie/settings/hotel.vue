@@ -142,11 +142,13 @@ async function saveLoyaltyConfig(): Promise<void> {
   if (!hotelId) return;
   loyaltyConfigSaving.value = true;
   try {
-    const payload: { cashbackCampaignId?: null | string; refreshToken?: string } =
-      {
-        // 清空字串 → null（明確清掉舊值）；非空 → 寫入
-        cashbackCampaignId: loyaltyConfig.cashbackCampaignId.trim() || null,
-      };
+    const payload: {
+      cashbackCampaignId?: null | string;
+      refreshToken?: string;
+    } = {
+      // 清空字串 → null（明確清掉舊值）；非空 → 寫入
+      cashbackCampaignId: loyaltyConfig.cashbackCampaignId.trim() || null,
+    };
     const newToken = loyaltyConfig.refreshToken.trim();
     if (newToken) payload.refreshToken = newToken;
 
@@ -658,10 +660,7 @@ function onCoverDragEnd(): void {
             <template #header>
               <div class="flex items-center justify-between">
                 <span>會員功能總開關</span>
-                <ElTag
-                  :type="loyaltyEnabled ? 'success' : 'info'"
-                  size="small"
-                >
+                <ElTag :type="loyaltyEnabled ? 'success' : 'info'" size="small">
                   {{ loyaltyEnabled ? '已啟用' : '已停用' }}
                 </ElTag>
               </div>
@@ -694,10 +693,7 @@ function onCoverDragEnd(): void {
             </ElForm>
           </ElCard>
 
-          <ElCard
-            v-loading="loyaltyConfigLoading"
-            shadow="never"
-          >
+          <ElCard v-loading="loyaltyConfigLoading" shadow="never">
             <template #header>
               <div class="flex items-center justify-between">
                 <span>Loyalty 旅館設定</span>
