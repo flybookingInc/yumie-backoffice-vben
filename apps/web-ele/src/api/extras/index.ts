@@ -40,11 +40,11 @@ export const extrasApi = {
    * Path uses `items/:itemId` 而非 `:id/photo`，避免與 CRUD `:id` 衝突。
    */
   uploadPhoto(itemId: string, file: File) {
-    const formData = new FormData();
-    formData.append('file', file);
-    return requestClient.post<{ path: string; url: string }>(
+    // 用 requestClient.upload 而非 .post — vben 預設 header 是
+    // application/json，.upload 內建會蓋成 multipart/form-data 並自帶 boundary
+    return requestClient.upload<{ path: string; url: string }>(
       `/extras/items/${itemId}/photo`,
-      formData,
+      { file },
     );
   },
 };

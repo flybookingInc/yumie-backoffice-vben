@@ -76,11 +76,11 @@ export const hotelsApi = {
    * 路徑前綴：`hotels/{hotelId}/covers/`，回 `{ url, path }`。
    */
   uploadPhoto(id: string, file: File) {
-    const formData = new FormData();
-    formData.append('file', file);
-    return requestClient.post<{ path: string; url: string }>(
+    // 用 requestClient.upload 自帶 multipart/form-data Content-Type，
+    // 蓋掉 vben 預設的 application/json
+    return requestClient.upload<{ path: string; url: string }>(
       `/hotels/${id}/photos`,
-      formData,
+      { file },
     );
   },
 };
