@@ -128,7 +128,7 @@ src/
 | `access.ts` | `accessMode='backend'` — 選單由後端 `/v2/menu/all` 產生（`getAllMenusApi`），前端只提供 component/layout map |
 | `guard.ts` | 三道守衛：`CommonGuard`（進度條）、`AccessGuard`（await authReady → token 檢查 → 生成動態路由）、`LoyaltyGuard`（requiresLoyalty 且飯店未啟用會員 → 擋下，superAdmin 例外） |
 
-選單樹（見 `routes/modules/yumie.ts`，但 `accessMode='backend'` 實際以 `/v2/menu/all` 為準）： `訂單`(occupy/booking)、`房況`(inventory/availability)、`加購`、 `數據`(customers*/sms/sms-billing*/partner-performance)、`設定`(room-types/plans/partners/hotel/membership-benefits†/users*/super-admin*) 　　`*` = 限 superAdmin，`†` = requiresLoyalty。`partners`（合作夥伴）與 `partner-performance`（合作成效）為異業合作功能，hotel-scoped admin 可管（非 superAdmin-only）。
+選單樹（見 `routes/modules/yumie.ts`，但 `accessMode='backend'` 實際以 `/v2/menu/all` 為準）： `訂單`(occupy/booking)、`房況`(inventory/availability)、`加購`、 `數據`(customers*/sms/sms-billing*/partner-performance/partner-settlement)、`設定`(room-types/plans/partners/hotel/membership-benefits†/users*/super-admin*) 　　`*` = 限 superAdmin，`†` = requiresLoyalty。`partners`（合作夥伴）、`partner-performance`（合作成效，即時分析）、`partner-settlement`（合作結算，回饋帳本/月結/撥款）為異業合作功能，hotel-scoped admin 可管（非 superAdmin-only）。
 
 預設首頁 `/orders/occupy`（見 `preferences.ts` 與 `auth-sync.ADMIN_HOME`）。
 
@@ -142,7 +142,7 @@ src/
 | `orders/booking.vue` | 手動建單（admin） |
 | `rooms/inventory.vue` · `rooms/availability.vue` | 房量 / 時段 |
 | `extras/index.vue` | 加購品項 |
-| `reports/customers.vue` · `reports/sms.vue` · `reports/sms-billing.vue` · `reports/partner-performance.vue` | 數據報表（含異業合作成效） |
+| `reports/customers.vue` · `reports/sms.vue` · `reports/sms-billing.vue` · `reports/partner-performance.vue` · `reports/partner-settlement.vue` | 數據報表（含異業合作成效 + 回饋帳本結算） |
 | `settings/*` | room-types / plans / partners / hotel / membership-benefits / users / super-admin |
 | `memberships/manual-upgrade.vue` | 會員手動升級 |
 

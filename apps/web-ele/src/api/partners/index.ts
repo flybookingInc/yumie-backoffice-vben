@@ -3,6 +3,11 @@ import type {
   PartnerInput,
   PartnerPerformanceRow,
   PartnerReportParams,
+  RewardEntry,
+  RewardEntryStatus,
+  Settlement,
+  SettlementPreviewGroup,
+  SettleRunResult,
 } from './types';
 
 import { requestClient } from '#/api/request';
@@ -34,9 +39,49 @@ export const partnersApi = {
   },
 };
 
+export const partnerRewardsApi = {
+  /** GET /v2/partners/rewards — 帳本明細 drill-down */
+  listRewards(params: {
+    limit?: number;
+    month: string;
+    referralCode?: string;
+    status?: RewardEntryStatus;
+  }) {
+    return requestClient.get<RewardEntry[]>('/partners/rewards', { params });
+  },
+  /** GET /v2/partners/settlements — 結算單歷史 */
+  listSettlements(params: { limit?: number; month?: string }) {
+    return requestClient.get<Settlement[]>('/partners/settlements', { params });
+  },
+  /** PUT /v2/partners/settlements/:id/paid — 標記已撥款 */
+  markPaid(id: string, payoutRef: string) {
+    return requestClient.put<Settlement>(`/partners/settlements/${id}/paid`, {
+      payoutRef,
+    });
+  },
+  /** POST /v2/partners/rewards/reconcile — 核算 + 回 per-夥伴 pending 預覽 */
+  reconcile(month: string) {
+    return requestClient.post<SettlementPreviewGroup[]>(
+      '/partners/rewards/reconcile',
+      { month },
+    );
+  },
+  /** POST /v2/partners/settlements/run — 一鍵月結 */
+  runSettlement(month: string) {
+    return requestClient.post<SettleRunResult>('/partners/settlements/run', {
+      month,
+    });
+  },
+};
+
 export type {
   Partner,
   PartnerInput,
   PartnerPerformanceRow,
   PartnerReportParams,
+  RewardEntry,
+  RewardEntryStatus,
+  Settlement,
+  SettlementPreviewGroup,
+  SettleRunResult,
 } from './types';

@@ -47,3 +47,60 @@ export interface PartnerReportParams {
   /** YYYY-MM-DD */
   startDate: string;
 }
+
+// ===== 回饋帳本 / 結算 =====
+
+export type RewardEntryStatus = 'pending' | 'settled' | 'void';
+export type SettlementStatus = 'paid' | 'settled';
+
+export interface AuditActor {
+  email?: string;
+  uid: string;
+}
+
+export interface RewardEntry {
+  amount: number;
+  bookingDatetime: string;
+  checkInDate: string;
+  checkinDatetime: string;
+  createdAt: string;
+  customerId: string;
+  orderId: string;
+  partnerName: string;
+  referralCode: string;
+  settledAt?: string;
+  settlementId: null | string;
+  status: RewardEntryStatus;
+  updatedAt: string;
+}
+
+/** reconcile 預覽：per-夥伴 pending 摘要 */
+export interface SettlementPreviewGroup {
+  entryCount: number;
+  partnerName: string;
+  referralCode: string;
+  totalAmount: number;
+}
+
+export interface Settlement {
+  createdAt: string;
+  createdBy: AuditActor;
+  entryCount: number;
+  month: string;
+  paidAt?: string;
+  paidBy?: AuditActor;
+  partnerName: string;
+  payoutRef?: string;
+  periodEnd: string;
+  periodStart: string;
+  referralCode: string;
+  settlementId: string;
+  status: SettlementStatus;
+  totalAmount: number;
+  updatedAt: string;
+}
+
+export interface SettleRunResult {
+  settlements: Settlement[];
+  skippedStale: number;
+}
