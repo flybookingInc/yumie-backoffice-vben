@@ -1,5 +1,6 @@
 import type {
   Partner,
+  PartnerAccountResult,
   PartnerInput,
   PartnerPerformanceRow,
   PartnerReportParams,
@@ -11,6 +12,34 @@ import type {
 } from './types';
 
 import { requestClient } from '#/api/request';
+
+export const partnerAccountApi = {
+  /** POST /v2/partners/:code/account — 建立登入帳號 */
+  create(code: string, data: { email: string; password?: string }) {
+    return requestClient.post<PartnerAccountResult>(
+      `/partners/${code}/account`,
+      data,
+    );
+  },
+  /** DELETE /v2/partners/:code/account — 停用登入帳號 */
+  disable(code: string) {
+    return requestClient.delete<PartnerAccountResult>(
+      `/partners/${code}/account`,
+    );
+  },
+  /** POST /v2/partners/:code/account/enable — 重新啟用 */
+  enable(code: string) {
+    return requestClient.post<PartnerAccountResult>(
+      `/partners/${code}/account/enable`,
+    );
+  },
+  /** POST /v2/partners/:code/account/reset — 取得密碼重設連結 */
+  reset(code: string) {
+    return requestClient.post<PartnerAccountResult>(
+      `/partners/${code}/account/reset`,
+    );
+  },
+};
 
 export const partnersApi = {
   /** POST /v2/partners — 建立（doc id = normalized code） */
@@ -76,6 +105,8 @@ export const partnerRewardsApi = {
 
 export type {
   Partner,
+  PartnerAccountResult,
+  PartnerAccountStatus,
   PartnerInput,
   PartnerPerformanceRow,
   PartnerReportParams,

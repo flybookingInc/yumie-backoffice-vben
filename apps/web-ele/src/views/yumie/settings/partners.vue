@@ -23,7 +23,7 @@ import {
 } from 'element-plus';
 import { toDataURL } from 'qrcode';
 
-import { partnersApi } from '#/api/partners';
+import { partnerAccountApi, partnersApi } from '#/api/partners';
 import { useHotelStore } from '#/store/hotel';
 
 defineOptions({ name: 'SettingsPartnersPage' });
@@ -206,6 +206,131 @@ async function copyBookingUrl(): Promise<void> {
   }
 }
 
+// ===== 夥伴登入帳號（門戶對帳）=====
+const accountDialogOpen = ref(false);
+const accountTarget = ref<null | Partner>(null);
+const accountEmail = ref('');
+const accountPassword = ref('');
+const accountSaving = ref(false);
+const accountLink = ref('');
+const accountLinkLabel = ref('');
+
+function accountStatusText(s?: string): string {
+  switch (s) {
+    case 'active': {
+      return '已啟用';
+    }
+    case 'authReadyDisabled': {
+      return '建立中（待啟用）';
+    }
+    case 'disabled': {
+      return '已停用';
+    }
+    case 'provisioning': {
+      return '建立中';
+    }
+    default: {
+      return '未建立';
+    }
+  }
+}
+
+function openAccount(row: Partner): void {
+  accountTarget.value = row;
+  accountEmail.value = row.accountEmail ?? '';
+  accountPassword.value = '';
+  accountLink.value = '';
+  accountLinkLabel.value = '';
+  accountDialogOpen.value = true;
+}
+
+async function createAccount(): Promise<void> {
+  const target = accountTarget.value;
+  if (!target || !accountEmail.value.trim()) {
+    ElMessage.warning('請輸入 Email');
+    return;
+  }
+  accountSaving.value = true;
+  try {
+    const result = await partnerAccountApi.create(target.code, {
+      email: accountEmail.value.trim(),
+      password: accountPassword.value || undefined,
+    });
+    if (result.linkError) {
+      ElMessage.warning('帳號已建立，但設定連結產生失敗，請改用「重設密碼」');
+    } else if (result.setupLink) {
+      accountLink.value = result.setupLink;
+      accountLinkLabel.value = '密碼設定連結（轉交夥伴）';
+      ElMessage.success('帳號已建立');
+    } else {
+      ElMessage.success('帳號已建立');
+    }
+    await load();
+  } catch {
+    // interceptor toasted（email 重複/已存在等）
+  } finally {
+    accountSaving.value = false;
+  }
+}
+
+async function resetAccountPassword(): Promise<void> {
+  const target = accountTarget.value;
+  if (!target) return;
+  accountSaving.value = true;
+  try {
+    const result = await partnerAccountApi.reset(target.code);
+    accountLink.value = result.resetLink ?? '';
+    accountLinkLabel.value = '密碼重設連結（轉交夥伴）';
+    ElMessage.success('已產生重設連結');
+  } catch {
+    // interceptor toasted
+  } finally {
+    accountSaving.value = false;
+  }
+}
+
+async function disableAccount(): Promise<void> {
+  const target = accountTarget.value;
+  if (!target) return;
+  accountSaving.value = true;
+  try {
+    await partnerAccountApi.disable(target.code);
+    ElMessage.success('登入帳號已停用');
+    await load();
+    accountDialogOpen.value = false;
+  } catch {
+    // interceptor toasted
+  } finally {
+    accountSaving.value = false;
+  }
+}
+
+async function enableAccount(): Promise<void> {
+  const target = accountTarget.value;
+  if (!target) return;
+  accountSaving.value = true;
+  try {
+    await partnerAccountApi.enable(target.code);
+    ElMessage.success('登入帳號已啟用');
+    await load();
+    accountDialogOpen.value = false;
+  } catch {
+    // interceptor toasted
+  } finally {
+    accountSaving.value = false;
+  }
+}
+
+async function copyAccountLink(): Promise<void> {
+  if (!accountLink.value) return;
+  try {
+    await navigator.clipboard.writeText(accountLink.value);
+    ElMessage.success('連結已複製');
+  } catch {
+    ElMessage.error('複製失敗，請手動複製');
+  }
+}
+
 watch(currentHotelId, () => void load(), { immediate: true });
 </script>
 
@@ -248,7 +373,22 @@ watch(currentHotelId, () => void load(), { immediate: true });
             </ElTag>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="操作" width="240" align="center" fixed="right">
+        <ElTableColumn label="登入帳號" width="110" align="center">
+          <template #default="{ row }">
+            <ElTag
+              :type="
+                (row as Partner).accountStatus === 'active'
+                  ? 'success'
+                  : (row as Partner).accountStatus
+                    ? 'warning'
+                    : 'info'
+              "
+            >
+              {{ accountStatusText((row as Partner).accountStatus) }}
+            </ElTag>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="操作" width="320" align="center" fixed="right">
           <template #default="{ row }">
             <ElButton
               size="small"
@@ -256,6 +396,9 @@ watch(currentHotelId, () => void load(), { immediate: true });
               @click="openQr(row as Partner)"
             >
               QR
+            </ElButton>
+            <ElButton size="small" @click="openAccount(row as Partner)">
+              帳號
             </ElButton>
             <ElButton size="small" @click="openEdit(row as Partner)">
               編輯
@@ -371,6 +514,101 @@ watch(currentHotelId, () => void load(), { immediate: true });
         <ElButton type="primary" :disabled="!qrDataUrl" @click="downloadQr">
           下載 PNG
         </ElButton>
+      </template>
+    </ElDialog>
+
+    <ElDialog
+      v-model="accountDialogOpen"
+      :title="`登入帳號 — ${accountTarget?.partnerName ?? ''}`"
+      width="460"
+    >
+      <p class="mb-2">
+        狀態：
+        <ElTag
+          :type="
+            accountTarget?.accountStatus === 'active'
+              ? 'success'
+              : accountTarget?.accountStatus
+                ? 'warning'
+                : 'info'
+          "
+        >
+          {{ accountStatusText(accountTarget?.accountStatus) }}
+        </ElTag>
+      </p>
+
+      <ElForm label-width="80" @submit.prevent>
+        <ElFormItem label="Email">
+          <ElInput
+            v-model="accountEmail"
+            :disabled="!!accountTarget?.accountStatus"
+            placeholder="夥伴登入 Email"
+          />
+        </ElFormItem>
+        <ElFormItem v-if="!accountTarget?.accountStatus" label="密碼">
+          <ElInput
+            v-model="accountPassword"
+            type="password"
+            show-password
+            placeholder="（選填，留空則寄設定連結）"
+          />
+        </ElFormItem>
+      </ElForm>
+
+      <ElAlert
+        v-if="accountLink"
+        type="success"
+        :closable="false"
+        show-icon
+        :title="accountLinkLabel"
+        class="mb-2"
+      >
+        <div style="word-break: break-all">{{ accountLink }}</div>
+        <ElButton size="small" class="mt-1" @click="copyAccountLink">
+          複製連結
+        </ElButton>
+      </ElAlert>
+
+      <template #footer>
+        <ElButton @click="accountDialogOpen = false">關閉</ElButton>
+        <ElButton
+          v-if="!accountTarget?.accountStatus"
+          type="primary"
+          :loading="accountSaving"
+          @click="createAccount"
+        >
+          建立帳號
+        </ElButton>
+        <template v-else>
+          <ElButton
+            v-if="accountTarget?.accountStatus !== 'disabled'"
+            :loading="accountSaving"
+            @click="resetAccountPassword"
+          >
+            重設密碼
+          </ElButton>
+          <ElButton
+            v-if="accountTarget?.accountStatus === 'disabled'"
+            type="primary"
+            :loading="accountSaving"
+            @click="enableAccount"
+          >
+            重新啟用
+          </ElButton>
+          <ElPopconfirm
+            v-else
+            title="確認停用此登入帳號？夥伴將立即無法登入對帳門戶。"
+            confirm-button-text="停用"
+            cancel-button-text="取消"
+            @confirm="disableAccount"
+          >
+            <template #reference>
+              <ElButton type="danger" :loading="accountSaving">
+                停用帳號
+              </ElButton>
+            </template>
+          </ElPopconfirm>
+        </template>
       </template>
     </ElDialog>
   </div>

@@ -2,6 +2,12 @@
  * 異業合作夥伴（保養廠推薦）— 對齊後端 /v2/partners。
  * hotelId 由 requestClient 自動注入，不必手動帶。
  */
+export type PartnerAccountStatus =
+  | 'active'
+  | 'authReadyDisabled'
+  | 'disabled'
+  | 'provisioning';
+
 export interface Partner {
   code: string;
   partnerName: string;
@@ -10,8 +16,21 @@ export interface Partner {
   rewardPerBooking: number;
   minReservedMinutes: number;
   active: boolean;
+  /** 夥伴登入帳號（門戶用）。未建立則為 undefined。 */
+  accountEmail?: string;
+  accountStatus?: PartnerAccountStatus;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface PartnerAccountResult {
+  accountEmail?: string;
+  accountStatus?: PartnerAccountStatus;
+  code: string;
+  /** 建立時未帶密碼 → 後端產生的設定連結（linkError 時為 null）。 */
+  linkError?: boolean;
+  resetLink?: string;
+  setupLink?: null | string;
 }
 
 /** 建立/更新輸入。建立時須帶 code（不可後續修改）。 */

@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yumie 後台 — 異業合作夥伴操作手冊</title>
+    <style>
+      :root {
+        --green: #14442e;
+        --green-soft: #1f5a3d;
+        --green-pale: #eaf3ec;
+        --yellow: #f3b50c;
+        --yellow-soft: #fff5d6;
+        --ink: #1f2723;
+        --muted: #5d6b63;
+        --line: #d9e2dc;
+        --bg: #f6f8f6;
+        --radius: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+        line-height: 1.7;
+        color: var(--ink);
+        background: var(--bg);
+      }
+
+      .wrap {
+        max-width: 900px;
+        padding: 0 20px 80px;
+        margin: 0 auto;
+      }
+
+      header.hero {
+        padding: 40px 0 34px;
+        color: #fff;
+        background: linear-gradient(
+          135deg,
+          var(--green) 0%,
+          var(--green-soft) 100%
+        );
+      }
+
+      header.hero .wrap {
+        padding-bottom: 0;
+      }
+
+      .hero h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        letter-spacing: 0.5px;
+      }
+
+      .hero .sub {
+        margin: 0;
+        font-size: 15px;
+        color: #d6e7dc;
+      }
+
+      .hero .pill {
+        display: inline-block;
+        padding: 4px 12px;
+        margin-top: 16px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #5a3d00;
+        background: var(--yellow);
+        border-radius: 999px;
+      }
+
+      h2 {
+        padding-bottom: 8px;
+        margin: 44px 0 14px;
+        font-size: 21px;
+        color: var(--green);
+        border-bottom: 2px solid var(--yellow);
+      }
+
+      h3 {
+        margin: 26px 0 8px;
+        font-size: 16.5px;
+        color: var(--green-soft);
+      }
+
+      p {
+        margin: 10px 0;
+      }
+
+      a {
+        color: var(--green-soft);
+      }
+
+      code {
+        padding: 1px 6px;
+        font-family: 'Cascadia Code', Consolas, monospace;
+        font-size: 0.9em;
+        background: #eef3ef;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+      }
+
+      .toc {
+        padding: 18px 22px;
+        margin-top: 26px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+
+      .toc h2 {
+        margin: 0 0 10px;
+        font-size: 16px;
+        border: 0;
+      }
+
+      .toc ol {
+        padding-left: 20px;
+        margin: 0;
+        columns: 2;
+      }
+
+      .toc a {
+        text-decoration: none;
+      }
+
+      .toc a:hover {
+        text-decoration: underline;
+      }
+
+      table {
+        width: 100%;
+        margin: 14px 0;
+        overflow: hidden;
+        font-size: 14.5px;
+        border-collapse: collapse;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+
+      th,
+      td {
+        padding: 9px 12px;
+        vertical-align: top;
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+      }
+
+      th {
+        font-weight: 600;
+        color: var(--green);
+        background: var(--green-pale);
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      ol.steps {
+        padding-left: 0;
+        margin: 14px 0;
+        list-style: none;
+        counter-reset: step;
+      }
+
+      ol.steps > li {
+        position: relative;
+        padding: 4px 0 14px 44px;
+        margin: 0;
+      }
+
+      ol.steps > li::before {
+        position: absolute;
+        top: 2px;
+        left: 0;
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        content: counter(step);
+        counter-increment: step;
+        background: var(--green);
+        border-radius: 50%;
+      }
+
+      ol.steps > li::after {
+        position: absolute;
+        top: 30px;
+        bottom: 0;
+        left: 13.5px;
+        width: 1.5px;
+        content: '';
+        background: var(--line);
+      }
+
+      ol.steps > li:last-child::after {
+        display: none;
+      }
+
+      .note,
+      .warn,
+      .tip {
+        padding: 12px 16px;
+        margin: 14px 0;
+        font-size: 14.5px;
+        border: 1px solid;
+        border-left-width: 5px;
+        border-radius: var(--radius);
+      }
+
+      .note {
+        background: #eef4fb;
+        border-color: #9cc1e8;
+      }
+
+      .warn {
+        background: #fdeeee;
+        border-color: #e3a6a6;
+      }
+
+      .tip {
+        background: var(--yellow-soft);
+        border-color: var(--yellow);
+      }
+
+      .note b,
+      .warn b,
+      .tip b {
+        display: inline-block;
+        margin-right: 4px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 1px 9px;
+        font-size: 12.5px;
+        font-weight: 600;
+        white-space: nowrap;
+        border: 1px solid transparent;
+        border-radius: 999px;
+      }
+
+      .b-warn {
+        color: #8a5a00;
+        background: #fdf0d9;
+        border-color: #f0cf8a;
+      }
+
+      .b-ok {
+        color: #1d6b38;
+        background: #e3f3e8;
+        border-color: #a9d9b8;
+      }
+
+      .b-info {
+        color: #5b6770;
+        background: #eceff1;
+        border-color: #cbd3d8;
+      }
+
+      .path {
+        font-weight: 600;
+        color: var(--green);
+        white-space: nowrap;
+      }
+
+      .path .sep {
+        margin: 0 4px;
+        color: var(--yellow);
+      }
+
+      .faq {
+        padding: 4px 18px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+
+      .faq details {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .faq details:last-child {
+        border-bottom: 0;
+      }
+
+      .faq summary {
+        font-weight: 600;
+        color: var(--green-soft);
+        cursor: pointer;
+      }
+
+      .faq summary::marker {
+        color: var(--yellow);
+      }
+
+      .faq p {
+        margin: 8px 0 4px;
+        color: var(--muted);
+      }
+
+      footer {
+        margin-top: 50px;
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      @media (max-width: 640px) {
+        .toc ol {
+          columns: 1;
+        }
+
+        .hero h1 {
+          font-size: 23px;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        header.hero {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          background: var(--green) !important;
+        }
+
+        a {
+          color: var(--ink);
+          text-decoration: none;
+        }
+
+        .toc {
+          break-inside: avoid;
+        }
+
+        h2 {
+          break-after: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="wrap">
+        <h1>異業合作夥伴 — 後台操作手冊</h1>
+        <p class="sub">
+          Yumie 旅館訂房後台 · 「車子保養，人也休息」異業合作專案
+        </p>
+        <span class="pill">適用對象：旅館管理員</span>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <section>
+        <p>
+          本手冊說明如何在 Yumie
+          後台操作<strong>異業合作夥伴</strong>功能。合作夥伴（如汽車保養廠、輪胎行）會拿到一組<strong
+            >專屬推薦碼與 QR Code</strong
+          >，把等待中的車主導引到旅館預約短時休息；車主憑碼可<strong>加贈休息時間</strong>，旅館則對每一筆<strong>實際入住（抵達）</strong>的預約回饋夥伴固定金額。本手冊涵蓋三個後台頁面的完整操作。
+        </p>
+
+        <div class="note">
+          <b>操作前提：</b
+          >登入後請先在畫面<strong>右上角切換到要操作的飯店</strong>。所有合作夥伴資料、報表、結算都是<strong>依當前飯店</strong>顯示與儲存。
+        </div>
+
+        <div class="toc">
+          <h2>目錄</h2>
+          <ol>
+            <li><a href="#glossary">名詞速覽</a></li>
+            <li><a href="#manage">合作夥伴管理</a></li>
+            <li><a href="#qr">產生預約 QR Code</a></li>
+            <li><a href="#performance">合作成效報表</a></li>
+            <li><a href="#settlement">合作結算（月結）</a></li>
+            <li><a href="#rules">重要規則與注意事項</a></li>
+            <li><a href="#faq">常見問題 FAQ</a></li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 名詞 -->
+      <section id="glossary">
+        <h2>1. 名詞速覽</h2>
+        <table>
+          <tr>
+            <th style="width: 130px">名詞</th>
+            <th>說明</th>
+          </tr>
+          <tr>
+            <td>推薦碼</td>
+            <td>
+              每間合作夥伴的專屬代碼（例：<code>A001</code>）。客人經此碼預約即記為該夥伴帶來的來源。<strong
+                >建立後不可修改。</strong
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>休息加贈</td>
+            <td>
+              客人憑此夥伴推薦碼預約時，額外加贈的休息分鐘數（預設 30 分）。
+            </td>
+          </tr>
+          <tr>
+            <td>加時門檻</td>
+            <td>達到此預約時長（分鐘）才給加贈；預設 0＝任何時長皆贈。</td>
+          </tr>
+          <tr>
+            <td>每筆回饋</td>
+            <td>每一筆「抵達」的有效預約，回饋給夥伴的金額（預設 50 元）。</td>
+          </tr>
+          <tr>
+            <td>抵達</td>
+            <td>
+              客人實際到店入住的訂單狀態。<strong
+                >只有抵達的預約才計入回饋。</strong
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>轉換數</td>
+            <td>經由該推薦碼成立的預約筆數（含未抵達）。</td>
+          </tr>
+          <tr>
+            <td>待結算 / 已結算 / 已撥款</td>
+            <td>
+              回饋帳本的三種狀態：<span class="badge b-warn">待結算</span>
+              尚未結算 → <span class="badge b-ok">已結算</span> 已產生結算單 →
+              <span class="badge b-ok">已撥款</span> 已實際付款給夥伴。
+            </td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- 合作夥伴管理 -->
+      <section id="manage">
+        <h2>2. 合作夥伴管理</h2>
+        <p>
+          位置：<span class="path">設定<span class="sep">›</span>合作夥伴</span
+          >。在這裡新增、編輯、停用合作夥伴，並產生 QR Code。
+        </p>
+
+        <h3>2.1 新增合作夥伴</h3>
+        <ol class="steps">
+          <li>點右上角<strong>「新增夥伴」</strong>。</li>
+          <li>
+            填寫表單欄位（見下表），其中<strong>推薦碼</strong>與<strong>店家名稱</strong>為必填。
+          </li>
+          <li>
+            點<strong>「儲存」</strong>。新夥伴會出現在列表，狀態為
+            <span class="badge b-ok">啟用</span>。
+          </li>
+        </ol>
+
+        <table>
+          <tr>
+            <th style="width: 140px">欄位</th>
+            <th>說明</th>
+            <th style="width: 90px">預設</th>
+          </tr>
+          <tr>
+            <td>推薦碼</td>
+            <td>
+              英文、數字、<code>-</code>、<code>_</code>，1–32
+              碼。系統會自動轉大寫（<code>a001</code> 視同
+              <code>A001</code>）。<strong
+                >不可與既有重複，且建立後不可修改。</strong
+              >
+            </td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>店家名稱</td>
+            <td>夥伴店家全名，例：「XX 汽車保養廠」。</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>聯絡資訊</td>
+            <td>選填，電話 / 聯絡人，方便對帳撥款時聯繫。</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>休息加贈（分鐘）</td>
+            <td>客人憑碼預約時加贈的分鐘數。</td>
+            <td>30</td>
+          </tr>
+          <tr>
+            <td>加時門檻（分鐘）</td>
+            <td>預約時長達此值才加贈；0＝皆贈。</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td>每筆回饋（元）</td>
+            <td>每筆抵達預約回饋夥伴的金額。</td>
+            <td>50</td>
+          </tr>
+          <tr>
+            <td>啟用</td>
+            <td>關閉後此推薦碼立即失效（客人掃描不再加時、不再歸因）。</td>
+            <td>開</td>
+          </tr>
+        </table>
+
+        <h3>2.2 編輯合作夥伴</h3>
+        <ol class="steps">
+          <li>在列表該列點<strong>「編輯」</strong>。</li>
+          <li>修改欄位後<strong>「儲存」</strong>。</li>
+        </ol>
+        <div class="warn">
+          <b>注意：</b
+          >編輯時<strong>推薦碼欄位是鎖定、不可修改</strong>的。若真的要換碼，請<strong>新增一組新碼，並停用舊碼</strong>（這樣歷史歸因與結算才不會混亂）。
+        </div>
+
+        <h3>2.3 停用合作夥伴</h3>
+        <ol class="steps">
+          <li>在列表該列點<strong>「停用」</strong>，於確認視窗按「停用」。</li>
+          <li>
+            該夥伴狀態變為 <span class="badge b-info">停用</span>。其推薦碼/QR
+            立即失效：客人掃描仍可訂房，但<strong>不再加贈時間、不再記為該夥伴來源</strong>。
+          </li>
+        </ol>
+        <div class="tip">
+          <b>提醒：</b
+          >停用不會刪除歷史。先前已成立的訂單與已產生的回饋、結算單都會保留。要重新啟用，點「編輯」把「啟用」打開即可。
+        </div>
+      </section>
+
+      <!-- QR -->
+      <section id="qr">
+        <h2>3. 產生預約 QR Code</h2>
+        <p>
+          位置：<span class="path">設定<span class="sep">›</span>合作夥伴</span
+          >，列表每列的<strong>「QR」</strong>按鈕。這組 QR /
+          連結就是給夥伴張貼、讓他的客人掃描預約用的。
+        </p>
+        <ol class="steps">
+          <li>在該夥伴列點<strong>「QR」</strong>，跳出 QR 視窗。</li>
+          <li>
+            視窗會顯示 <strong>QR 圖、訂房連結</strong>。連結格式為
+            <code>訂房站/飯店代碼?ref=推薦碼</code>。
+          </li>
+          <li>
+            點<strong>「下載 PNG」</strong>取得圖檔（檔名
+            <code>referral-推薦碼.png</code>），交給夥伴印製立牌 / 小卡 /
+            海報；或點<strong>「複製連結」</strong>用 LINE 等傳給夥伴。
+          </li>
+        </ol>
+        <div class="warn">
+          <b>注意：</b>若該推薦碼目前<strong>停用</strong>，QR
+          視窗會顯示警告——此時掃描雖可訂房，但<strong>不會加時、不會歸因</strong>。請先啟用再發放。
+        </div>
+        <div class="note">
+          <b>掃描後會發生什麼：</b>客人掃 QR → 進入旅館訂房頁，頁面上方出現「憑
+          OOO 推薦碼，本次休息加贈 N 分鐘」橫幅 →
+          完成預約後，該筆訂單自動記下來源與回饋金額（快照）。
+        </div>
+      </section>
+
+      <!-- 成效 -->
+      <section id="performance">
+        <h2>4. 合作成效報表</h2>
+        <p>
+          位置：<span class="path">數據<span class="sep">›</span>合作成效</span
+          >。這是<strong>即時分析</strong>畫面，看各夥伴帶來的成效。
+        </p>
+        <ol class="steps">
+          <li>選上方<strong>日期區間</strong>（依入住日；最長 366 天）。</li>
+          <li>
+            點<strong>「查詢」</strong>，下方表格依各推薦碼列出指標，最後一列為合計。
+          </li>
+        </ol>
+        <table>
+          <tr>
+            <th style="width: 160px">指標</th>
+            <th>意義</th>
+          </tr>
+          <tr>
+            <td>轉換數</td>
+            <td>該碼帶來、成立的預約筆數（含未抵達）。</td>
+          </tr>
+          <tr>
+            <td>抵達數</td>
+            <td>實際入住的預約筆數＝有效預約。</td>
+          </tr>
+          <tr>
+            <td>抵達成交金額</td>
+            <td>抵達訂單的成交金額合計。</td>
+          </tr>
+          <tr>
+            <td>平均客單價</td>
+            <td>抵達成交金額 ÷ 抵達數。</td>
+          </tr>
+          <tr>
+            <td>回饋金成本</td>
+            <td>抵達筆數所對應的回饋金合計（＝預估要付給夥伴的錢）。</td>
+          </tr>
+        </table>
+        <div class="tip">
+          <b>成效 vs 結算：</b
+          >本頁的「回饋金成本」是<strong>即時估算</strong>，方便隨時觀察。真正要付款的權威金額，請以下一節<strong>「合作結算」</strong>產生的結算單為準。
+        </div>
+      </section>
+
+      <!-- 結算 -->
+      <section id="settlement">
+        <h2>5. 合作結算（月結）</h2>
+        <p>
+          位置：<span class="path">數據<span class="sep">›</span>合作結算</span
+          >。這是<strong>回饋金的權威帳本</strong>，用來每月結算並追蹤撥款。
+        </p>
+
+        <h3>5.1 結算流程總覽</h3>
+        <p style="font-size: 15px">
+          <span class="badge b-info">選月份</span> →
+          <span class="badge b-info">核算預覽</span> →
+          <span class="badge b-info">一鍵結算</span> →
+          <span class="badge b-info">標記撥款</span>
+        </p>
+
+        <h3>5.2 核算預覽</h3>
+        <ol class="steps">
+          <li>上方選<strong>月份</strong>（預設當月）。</li>
+          <li>
+            點<strong>「核算預覽」</strong>。系統會掃描該月訂單、整理出每個夥伴<strong>待結算</strong>的筆數與金額，並顯示「待結算合計」。
+          </li>
+          <li>可點某列的<strong>「明細」</strong>查看該夥伴的逐筆帳本分錄。</li>
+        </ol>
+        <div class="note">
+          <b>說明：</b
+          >核算只是<strong>整理與預覽</strong>，不會付款，可重複按。只有「抵達」的訂單會列入待結算；若某筆原本待結算的訂單後來被改成非抵達，核算會自動把它剔除。
+        </div>
+
+        <h3>5.3 一鍵結算</h3>
+        <ol class="steps">
+          <li>
+            核算出有待結算金額後，點<strong>「一鍵結算」</strong>，於確認視窗按「結算」。
+          </li>
+          <li>
+            系統為該月有待結算的<strong>每個夥伴各產生一張結算單</strong>，狀態為
+            <span class="badge b-ok">已結算</span
+            >，並出現在下方<strong>「結算單歷史」</strong>。
+          </li>
+        </ol>
+        <div class="tip">
+          <b>補充結算：</b
+          >若同一個月在你結算之後，又出現新的抵達（例如客人較晚到店補標抵達），<strong>下次再結算會為這些新筆數另外產生一張結算單</strong>（不會動到、也不會重複先前那張）。同一夥伴同月看到多張結算單是正常的。
+        </div>
+        <div class="warn">
+          <b>已結算即凍結：</b
+          >結算單一旦產生，其涵蓋的分錄就<strong>凍結</strong>。若之後該訂單又被改為非抵達，系統<strong>不會自動沖回</strong>，需要人工處理。
+        </div>
+
+        <h3>5.4 標記已撥款</h3>
+        <ol class="steps">
+          <li>
+            在「結算單歷史」找到狀態為
+            <span class="badge b-ok">已結算</span>
+            的單，點<strong>「標記撥款」</strong>。
+          </li>
+          <li>
+            視窗可填<strong>撥款備註 / 轉帳編號</strong>（選填，最多 200
+            字），點<strong>「確認撥款」</strong>。
+          </li>
+          <li>
+            該單狀態變為
+            <span class="badge b-ok">已撥款</span>，並記錄撥款時間與操作者。
+          </li>
+        </ol>
+        <div class="note">
+          <b>防呆：</b
+          >已撥款的結算單<strong>不能再次標記撥款</strong>（系統會擋下），避免重複付款。
+        </div>
+
+        <h3>5.5 帳本明細</h3>
+        <p>
+          在「核算預覽」或「結算單歷史」任一列點<strong>「明細」</strong>，可看到該夥伴該月的逐筆回饋分錄，每筆顯示<strong
+            >訂單 ID、入住日、金額、狀態</strong
+          >：
+        </p>
+        <table>
+          <tr>
+            <th style="width: 120px">狀態</th>
+            <th>意義</th>
+          </tr>
+          <tr>
+            <td><span class="badge b-warn">pending</span></td>
+            <td>待結算（抵達、尚未納入任何結算單）。</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-ok">settled</span></td>
+            <td>已結算（已納入某張結算單）。</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-info">void</span></td>
+            <td>已作廢（該訂單非抵達，例如取消 / No-Show；不計回饋）。</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- 規則 -->
+      <section id="rules">
+        <h2>6. 重要規則與注意事項</h2>
+        <div class="warn">
+          <b>1.</b>
+          推薦碼<strong>建立後不可修改</strong>。要換碼＝新增新碼＋停用舊碼。
+        </div>
+        <div class="warn">
+          <b>2.</b>
+          回饋金<strong>只算「抵達」</strong>的有效預約；未抵達、取消、No-Show
+          都不算。
+        </div>
+        <div class="tip">
+          <b>3.</b>
+          客人完成預約當下，會把當時的<strong>回饋金額快照</strong>在訂單上。之後你調整夥伴的「每筆回饋」金額，<strong>不會影響已成立的歷史訂單</strong>，只影響之後的新訂單。
+        </div>
+        <div class="tip">
+          <b>4.</b>
+          加時採<strong>擇優取最大、不疊加</strong>：若客人同時符合「會員等級加時」與「推薦碼加時」，取較多的那個（同分鐘數時以會員為準）。
+        </div>
+        <div class="warn">
+          <b>5.</b>
+          結算單<strong>已結算即凍結</strong>；<strong>已撥款不可重複</strong>。同一夥伴同月可能有多張結算單（補充結算）。
+        </div>
+        <div class="note">
+          <b>6.</b>
+          停用的推薦碼，客人掃描仍可訂房，但<strong>不加時、不歸因</strong>。
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq">
+        <h2>7. 常見問題 FAQ</h2>
+        <div class="faq">
+          <details>
+            <summary>客人說掃了 QR，但訂房頁沒看到加贈時間？</summary>
+            <p>
+              常見原因：① 該推薦碼目前<strong>停用</strong>；②
+              客人選的預約時長<strong>未達加時門檻</strong>；③
+              QR/連結被改過、推薦碼格式不正確。請到「設定 ›
+              合作夥伴」確認該碼為啟用、門檻設定，並重新用「QR」按鈕產生連結給夥伴。
+            </p>
+          </details>
+          <details>
+            <summary>
+              「合作成效」的回饋金成本，和「合作結算」的金額對不起來？
+            </summary>
+            <p>
+              「合作成效」是<strong>即時估算</strong>、會隨訂單狀態變動；「合作結算」是<strong>結算當下凍結的權威金額</strong>。若該月還沒結算、或結算後又有新抵達（補充結算），兩者短期內有差是正常的。<strong
+                >付款請以結算單為準。</strong
+              >
+            </p>
+          </details>
+          <details>
+            <summary>
+              已經結算（甚至撥款）後，客人才取消或變成 No-Show 怎麼辦？
+            </summary>
+            <p>
+              已結算的分錄<strong>凍結、不會自動沖回</strong>。這種情況請以人工方式在下次與夥伴對帳時調整。（結算<strong>前</strong>的狀態變動則會由「核算」自動作廢，不需手動處理。）
+            </p>
+          </details>
+          <details>
+            <summary>某個夥伴這個月明明有客人，卻找不到他的結算單？</summary>
+            <p>
+              請確認：① 是否已按「一鍵結算」；②
+              該夥伴本月是否有<strong>抵達</strong>的訂單（只有抵達才結算）；③
+              月份是否選對（結算依<strong>入住日</strong>所屬月份）。可先用「核算預覽」看該夥伴是否有待結算金額。
+            </p>
+          </details>
+          <details>
+            <summary>QR Code 裡的連結是指向哪個網站？</summary>
+            <p>
+              預設指向正式訂房站。此網址由系統設定
+              <code>VITE_GLOB_BOOKING_BASE_URL</code>
+              控制；若測試環境要指向測試站，請工程同仁於對應環境設定覆寫。一般營運不需更動。
+            </p>
+          </details>
+          <details>
+            <summary>看不到「合作夥伴 / 合作成效 / 合作結算」選單？</summary>
+            <p>
+              ① 確認已用有權限的旅館管理員帳號登入；②
+              確認右上角已選到正確的飯店。若仍看不到，請聯繫系統管理者確認帳號權限與選單設定。
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <footer>
+        Yumie 旅館訂房後台 ·
+        異業合作夥伴操作手冊　|　如內容與實際畫面不符，以實際後台為準。
+      </footer>
+    </div>
+  </body>
+</html>

@@ -143,7 +143,7 @@ src/
 | `rooms/inventory.vue` · `rooms/availability.vue` | 房量 / 時段 |
 | `extras/index.vue` | 加購品項 |
 | `reports/customers.vue` · `reports/sms.vue` · `reports/sms-billing.vue` · `reports/partner-performance.vue` · `reports/partner-settlement.vue` | 數據報表（含異業合作成效 + 回饋帳本結算） |
-| `settings/*` | room-types / plans / partners / hotel / membership-benefits / users / super-admin |
+| `settings/*` | room-types / plans / partners / hotel / membership-benefits / users / super-admin（`partners` 含 QR + **夥伴登入帳號管理**：建立/停用/啟用/重設，呼叫 `api/partners` 的 `partnerAccountApi`；帳號狀態欄由 `accountStatus` 顯示） |
 | `memberships/manual-upgrade.vue` | 會員手動升級 |
 
 頁面慣例：`<script setup>` + Element Plus 元件，從 `#/api/*` 取資料、`#/composables/*` 訂閱即時、 `#/store/hotel` 取當前飯店。
