@@ -92,10 +92,10 @@ async function runSettlement(): Promise<void> {
   try {
     const result = await partnerRewardsApi.runSettlement(month.value);
     ElMessage.success(
-      `已產生 ${result.settlements.length} 張結算單` +
-        (result.skippedStale > 0
+      `已產生 ${result.settlements.length} 張結算單${ 
+        result.skippedStale > 0
           ? `，略過 ${result.skippedStale} 筆失效（已自動 void）`
-          : ''),
+          : ''}`,
     );
     preview.value = [];
     await loadHistory();
@@ -160,12 +160,16 @@ async function openDetail(referralCode: string): Promise<void> {
 }
 
 const statusTag = (s: string): 'danger' | 'info' | 'success' | 'warning' =>
-  s === 'settled' ? 'success' : s === 'pending' ? 'warning' : 'info';
+  s === 'settled' ? 'success' : (s === 'pending' ? 'warning' : 'info');
 
-watch([currentHotelId, month], () => {
-  preview.value = [];
-  void loadHistory();
-}, { immediate: true });
+watch(
+  [currentHotelId, month],
+  () => {
+    preview.value = [];
+    void loadHistory();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -208,7 +212,12 @@ watch([currentHotelId, month], () => {
       >
         <ElTableColumn label="推薦碼" prop="referralCode" width="140" />
         <ElTableColumn label="店家名稱" prop="partnerName" min-width="160" />
-        <ElTableColumn label="待結算筆數" prop="entryCount" width="120" align="right" />
+        <ElTableColumn
+          label="待結算筆數"
+          prop="entryCount"
+          width="120"
+          align="right"
+        />
         <ElTableColumn label="待結算金額 (元)" width="160" align="right">
           <template #default="{ row }">
             {{ formatAmount((row as SettlementPreviewGroup).totalAmount) }}
@@ -225,7 +234,7 @@ watch([currentHotelId, month], () => {
           </template>
         </ElTableColumn>
       </ElTable>
-      <div v-if="preview.length" class="mt-2 text-right">
+      <div v-if="preview.length > 0" class="mt-2 text-right">
         待結算合計：<b>{{ formatAmount(previewTotal) }}</b> 元
       </div>
     </ElCard>
@@ -243,7 +252,12 @@ watch([currentHotelId, month], () => {
       >
         <ElTableColumn label="推薦碼" prop="referralCode" width="120" />
         <ElTableColumn label="店家名稱" prop="partnerName" min-width="140" />
-        <ElTableColumn label="筆數" prop="entryCount" width="80" align="right" />
+        <ElTableColumn
+          label="筆數"
+          prop="entryCount"
+          width="80"
+          align="right"
+        />
         <ElTableColumn label="金額 (元)" width="120" align="right">
           <template #default="{ row }">
             {{ formatAmount((row as Settlement).totalAmount) }}
@@ -251,7 +265,11 @@ watch([currentHotelId, month], () => {
         </ElTableColumn>
         <ElTableColumn label="狀態" width="90" align="center">
           <template #default="{ row }">
-            <ElTag :type="(row as Settlement).status === 'paid' ? 'success' : 'warning'">
+            <ElTag
+              :type="
+                (row as Settlement).status === 'paid' ? 'success' : 'warning'
+              "
+            >
               {{ (row as Settlement).status === 'paid' ? '已撥款' : '已結算' }}
             </ElTag>
           </template>

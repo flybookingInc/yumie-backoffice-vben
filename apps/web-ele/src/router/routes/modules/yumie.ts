@@ -112,8 +112,7 @@ const routes: RouteRecordRaw[] = [
         path: '/reports/partner-performance',
       },
       {
-        component: () =>
-          import('#/views/yumie/reports/partner-settlement.vue'),
+        component: () => import('#/views/yumie/reports/partner-settlement.vue'),
         meta: { icon: 'lucide:receipt', title: '合作結算' },
         name: 'ReportsPartnerSettlement',
         path: '/reports/partner-settlement',
