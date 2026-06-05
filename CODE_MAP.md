@@ -29,7 +29,7 @@ yumie-backoffice-vben/
 | staging | yumie-test | `pnpm deploy:ele:staging` | 無 confirm |
 | production | yumie-8e60e (`yumie-backoffice`) | `pnpm deploy:prod` | 有 confirm prompt |
 
-環境變數在 `apps/web-ele/.env*`：`.env`（共用）、`.env.development`、`.env.staging`、`.env.production`。 `VITE_GLOB_API_URL` 指向 `/v2` API，`VITE_FIREBASE_*` 為 Firebase config，`VITE_USE_APPCHECK` 控制 AppCheck（dev 關、prod 開）。
+環境變數在 `apps/web-ele/.env*`：`.env`（共用）、`.env.development`、`.env.staging`、`.env.production`。 `VITE_GLOB_API_URL` 指向 `/v2` API，`VITE_FIREBASE_*` 為 Firebase config，`VITE_USE_APPCHECK` 控制 AppCheck（dev 關、prod 開）。`VITE_GLOB_BOOKING_BASE_URL`（`.env` 共用，預設 `https://yumie.flybooking.io`）為顧客端訂房站 base URL，供合作夥伴頁產生預約 QR Code（`{base}/{hotelId}?ref={code}`）；staging/dev 要指向測試前端時於對應 `.env.*` 覆寫。
 
 ---
 

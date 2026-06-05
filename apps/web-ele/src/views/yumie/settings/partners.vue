@@ -6,6 +6,7 @@ import type { Partner, PartnerInput } from '#/api/partners';
 import { computed, reactive, ref, watch } from 'vue';
 
 import {
+  ElAlert,
   ElButton,
   ElCard,
   ElDialog,
@@ -20,6 +21,7 @@ import {
   ElTableColumn,
   ElTag,
 } from 'element-plus';
+import { toDataURL } from 'qrcode';
 
 import { partnersApi } from '#/api/partners';
 import { useHotelStore } from '#/store/hotel';
@@ -34,6 +36,12 @@ const saving = ref(false);
 const dialogOpen = ref(false);
 // 編輯時鎖定 code（不可改 code；改碼 = 新建 + 停用舊碼）。
 const editingCode = ref('');
+
+// 預約 QR Code（給合作夥伴的客人掃描）
+const qrDialogOpen = ref(false);
+const qrLoading = ref(false);
+const qrDataUrl = ref('');
+const qrPartner = ref<null | Partner>(null);
 
 const formRef = ref<FormInstance>();
 const form = reactive<Required<PartnerInput>>({
@@ -150,6 +158,54 @@ async function deactivate(row: Partner): Promise<void> {
   }
 }
 
+// 顧客端訂房站 base URL（去尾斜線）；預設正式站，可由 .env 覆寫。
+const bookingBaseUrl = (
+  (import.meta.env.VITE_GLOB_BOOKING_BASE_URL as string | undefined) ||
+  'https://yumie.flybooking.io'
+).replace(/\/+$/, '');
+
+function buildBookingUrl(code: string): string {
+  return `${bookingBaseUrl}/${currentHotelId.value}?ref=${encodeURIComponent(code)}`;
+}
+
+const qrBookingUrl = computed(() =>
+  qrPartner.value ? buildBookingUrl(qrPartner.value.code) : '',
+);
+
+async function openQr(row: Partner): Promise<void> {
+  qrPartner.value = row;
+  qrDataUrl.value = '';
+  qrDialogOpen.value = true;
+  qrLoading.value = true;
+  try {
+    qrDataUrl.value = await toDataURL(buildBookingUrl(row.code), {
+      margin: 2,
+      width: 320,
+    });
+  } catch {
+    ElMessage.error('QR Code 產生失敗');
+  } finally {
+    qrLoading.value = false;
+  }
+}
+
+function downloadQr(): void {
+  if (!qrDataUrl.value || !qrPartner.value) return;
+  const a = document.createElement('a');
+  a.href = qrDataUrl.value;
+  a.download = `referral-${qrPartner.value.code}.png`;
+  a.click();
+}
+
+async function copyBookingUrl(): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(qrBookingUrl.value);
+    ElMessage.success('連結已複製');
+  } catch {
+    ElMessage.error('複製失敗，請手動複製');
+  }
+}
+
 watch(currentHotelId, () => void load(), { immediate: true });
 </script>
 
@@ -192,8 +248,15 @@ watch(currentHotelId, () => void load(), { immediate: true });
             </ElTag>
           </template>
         </ElTableColumn>
-        <ElTableColumn label="操作" width="160" align="center" fixed="right">
+        <ElTableColumn label="操作" width="240" align="center" fixed="right">
           <template #default="{ row }">
+            <ElButton
+              size="small"
+              type="primary"
+              @click="openQr(row as Partner)"
+            >
+              QR
+            </ElButton>
             <ElButton size="small" @click="openEdit(row as Partner)">
               編輯
             </ElButton>
@@ -273,6 +336,41 @@ watch(currentHotelId, () => void load(), { immediate: true });
       <template #footer>
         <ElButton @click="dialogOpen = false">取消</ElButton>
         <ElButton type="primary" :loading="saving" @click="save">儲存</ElButton>
+      </template>
+    </ElDialog>
+
+    <ElDialog
+      v-model="qrDialogOpen"
+      :title="`預約 QR Code — ${qrPartner?.partnerName ?? ''}`"
+      width="420"
+    >
+      <div v-loading="qrLoading" class="flex flex-col items-center gap-3">
+        <ElAlert
+          v-if="qrPartner && !qrPartner.active"
+          type="warning"
+          :closable="false"
+          show-icon
+          title="此推薦碼目前停用，掃描不會加時與歸因"
+        />
+        <img
+          v-if="qrDataUrl"
+          :src="qrDataUrl"
+          alt="預約 QR Code"
+          width="280"
+          height="280"
+        />
+        <p class="text-sm" style="word-break: break-all; text-align: center">
+          {{ qrBookingUrl }}
+        </p>
+        <p class="text-xs" style="color: #999; text-align: center">
+          給合作夥伴張貼，讓等待中的車主掃描即可帶推薦碼進入訂房頁。
+        </p>
+      </div>
+      <template #footer>
+        <ElButton @click="copyBookingUrl">複製連結</ElButton>
+        <ElButton type="primary" :disabled="!qrDataUrl" @click="downloadQr">
+          下載 PNG
+        </ElButton>
       </template>
     </ElDialog>
   </div>
