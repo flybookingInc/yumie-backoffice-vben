@@ -92,10 +92,11 @@ async function runSettlement(): Promise<void> {
   try {
     const result = await partnerRewardsApi.runSettlement(month.value);
     ElMessage.success(
-      `已產生 ${result.settlements.length} 張結算單${ 
+      `已產生 ${result.settlements.length} 張結算單${
         result.skippedStale > 0
           ? `，略過 ${result.skippedStale} 筆失效（已自動 void）`
-          : ''}`,
+          : ''
+      }`,
     );
     preview.value = [];
     await loadHistory();
