@@ -104,6 +104,13 @@ const routes: RouteRecordRaw[] = [
         name: 'ReportsSmsBilling',
         path: '/reports/sms-billing',
       },
+      {
+        component: () =>
+          import('#/views/yumie/reports/partner-performance.vue'),
+        meta: { icon: 'lucide:handshake', title: '合作成效' },
+        name: 'ReportsPartnerPerformance',
+        path: '/reports/partner-performance',
+      },
     ],
     meta: { icon: 'lucide:bar-chart-3', order: 4, title: '數據' },
     name: 'Reports',
@@ -124,6 +131,12 @@ const routes: RouteRecordRaw[] = [
         meta: { icon: 'lucide:tag', title: '專案' },
         name: 'SettingsPlans',
         path: '/settings/plans',
+      },
+      {
+        component: () => import('#/views/yumie/settings/partners.vue'),
+        meta: { icon: 'lucide:handshake', title: '合作夥伴' },
+        name: 'SettingsPartners',
+        path: '/settings/partners',
       },
       {
         component: () => import('#/views/yumie/settings/hotel.vue'),

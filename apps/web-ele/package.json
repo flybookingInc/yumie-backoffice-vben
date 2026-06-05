@@ -47,10 +47,12 @@
     "firebase": "^10.14.1",
     "libphonenumber-js": "^1.13.3",
     "pinia": "catalog:",
+    "qrcode": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:"
   },
   "devDependencies": {
+    "@types/qrcode": "catalog:",
     "unplugin-element-plus": "catalog:"
   }
 }

@@ -231,6 +231,15 @@ function formatDiscount(row: Order): string {
     : '-';
 }
 
+/** 加時來源：referral 勝出顯示「推薦碼」，否則顯示會員等級碼（含舊訂單 source fallback）。 */
+function levelLabel(row: Order): string {
+  const mb = row.membershipBenefit as
+    | undefined
+    | { levelCode?: null | string; source?: null | string };
+  if (mb?.source === 'referral') return '推薦碼';
+  return mb?.levelCode ?? '-';
+}
+
 function extraBuyDisplay(items: ExtraBuyItem[]): string {
   if (!items?.length) return '-';
   return items
@@ -421,13 +430,7 @@ watch(_firestoreOrders, () => {
             <ElTableColumn label="等級" width="80" align="center">
               <template #default="{ row }">
                 <span v-if="!isTimeGroupRow(row as TableRow)">
-                  {{
-                    (
-                      (row as Order).membershipBenefit as
-                        | { levelCode?: string }
-                        | undefined
-                    )?.levelCode ?? '-'
-                  }}
+                  {{ levelLabel(row as Order) }}
                 </span>
               </template>
             </ElTableColumn>
