@@ -359,7 +359,7 @@ watch(currentHotelId, () => void load(), { immediate: true });
           width="280"
           height="280"
         />
-        <p class="text-sm" style="word-break: break-all; text-align: center">
+        <p class="text-sm" style=" text-align: center;word-break: break-all">
           {{ qrBookingUrl }}
         </p>
         <p class="text-xs" style="color: #999; text-align: center">
