@@ -373,7 +373,7 @@
           本手冊說明如何在 Yumie
           後台操作<strong>異業合作夥伴</strong>功能。合作夥伴（如汽車保養廠、輪胎行）會拿到一組<strong
             >專屬推薦碼與 QR Code</strong
-          >，把等待中的車主導引到旅館預約短時休息；車主憑碼可<strong>加贈休息時間</strong>，旅館則對每一筆<strong>實際入住（抵達）</strong>的預約回饋夥伴固定金額。本手冊涵蓋三個後台頁面的完整操作。
+          >，把等待中的車主導引到旅館預約短時休息；車主憑碼可<strong>加贈休息時間</strong>，旅館則對每一筆<strong>實際入住（抵達）</strong>的預約回饋夥伴固定金額。本手冊涵蓋後台的合作夥伴管理、成效、結算，以及讓夥伴<strong>自己登入對帳</strong>的帳號設定。
         </p>
 
         <div class="note">
@@ -389,6 +389,7 @@
             <li><a href="#qr">產生預約 QR Code</a></li>
             <li><a href="#performance">合作成效報表</a></li>
             <li><a href="#settlement">合作結算（月結）</a></li>
+            <li><a href="#account">夥伴登入帳號（自助對帳）</a></li>
             <li><a href="#rules">重要規則與注意事項</a></li>
             <li><a href="#faq">常見問題 FAQ</a></li>
           </ol>
@@ -713,9 +714,101 @@
         </table>
       </section>
 
+      <!-- 夥伴登入帳號 -->
+      <section id="account">
+        <h2>6. 夥伴登入帳號（讓夥伴自己對帳）</h2>
+        <p>
+          你可以幫合作夥伴開一個<strong>登入帳號</strong>，讓他自己到<strong>夥伴對帳門戶</strong>
+          <span class="path">https://partner.yumie.flybooking.io</span>
+          登入，查看<strong>屬於他自己</strong>的結算單與回饋明細。門戶是<strong>唯讀</strong>的，夥伴看不到客人個資、也看不到其他夥伴或後台任何資料。
+        </p>
+        <p>
+          位置：<span class="path"
+            >設定<span class="sep">›</span>合作夥伴</span
+          >，列表每列的<strong>「帳號」</strong>按鈕；列上「登入帳號」欄顯示目前狀態。
+        </p>
+
+        <h3>6.1 建立登入帳號</h3>
+        <ol class="steps">
+          <li>在該夥伴列點<strong>「帳號」</strong>。</li>
+          <li>輸入夥伴的 <strong>Email</strong>（作為登入帳號，須未被使用）。</li>
+          <li>
+            密碼可<strong>留空</strong>：系統會產生一組<strong>密碼設定連結</strong>，把連結轉交夥伴自行設定；或直接幫他設一組初始密碼。
+          </li>
+          <li>
+            點<strong>「建立帳號」</strong>。狀態變為
+            <span class="badge b-ok">已啟用</span>，夥伴即可登入門戶。
+          </li>
+        </ol>
+        <div class="tip">
+          <b>提醒：</b
+          >若視窗顯示<strong>密碼設定連結</strong>，用「複製連結」轉交夥伴（連結會導到門戶登入頁）。
+        </div>
+
+        <h3>6.2 帳號狀態</h3>
+        <table>
+          <tr>
+            <th style="width: 150px">狀態</th>
+            <th>意義</th>
+          </tr>
+          <tr>
+            <td><span class="badge b-info">未建立</span></td>
+            <td>尚未開帳號。</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-ok">已啟用</span></td>
+            <td>夥伴可正常登入對帳。</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-warn">建立中／待啟用</span></td>
+            <td>建立過程中斷的暫態；可再按「重設密碼」或聯絡工程處理。</td>
+          </tr>
+          <tr>
+            <td><span class="badge b-info">已停用</span></td>
+            <td>夥伴無法登入（即時生效）；可「重新啟用」。</td>
+          </tr>
+        </table>
+
+        <h3>6.3 重設密碼 / 停用 / 重新啟用</h3>
+        <ol class="steps">
+          <li>
+            <strong>重設密碼</strong>：帳號視窗點「重設密碼」，產生重設連結轉交夥伴。
+          </li>
+          <li>
+            <strong>停用帳號</strong>：點「停用帳號」→
+            夥伴<strong>立即</strong>無法登入（保留帳號，可再啟用）。
+          </li>
+          <li>
+            <strong>重新啟用</strong>：已停用的帳號點「重新啟用」即可恢復登入。
+          </li>
+        </ol>
+
+        <h3>6.4 夥伴在門戶看到什麼</h3>
+        <p>夥伴登入後，可選月份查看自己的：</p>
+        <ul>
+          <li>頂部三個數字：<strong>待結算 / 已結算 / 已撥款</strong> 金額。</li>
+          <li>
+            <strong>結算單</strong>：每張的筆數、金額、狀態（已結算／已撥款）、撥款時間與備註。
+          </li>
+          <li>
+            <strong>明細</strong>：逐筆入住日、回饋金額、狀態（pending／settled／void）。
+          </li>
+        </ul>
+        <div class="note">
+          <b>對帳一致性：</b
+          >夥伴門戶的數字＝後台「合作結算」同一夥伴同月的權威金額；你按「標記撥款」後，夥伴頁會看到該單變
+          <span class="badge b-ok">已撥款</span>。
+        </div>
+        <div class="warn">
+          <b>換 Email：</b
+          >目前<strong>不支援直接改帳號 Email</strong>。要換 email
+          請聯絡工程移除舊帳號後重新建立（停用只是停權、不會釋放 email）。
+        </div>
+      </section>
+
       <!-- 規則 -->
       <section id="rules">
-        <h2>6. 重要規則與注意事項</h2>
+        <h2>7. 重要規則與注意事項</h2>
         <div class="warn">
           <b>1.</b>
           推薦碼<strong>建立後不可修改</strong>。要換碼＝新增新碼＋停用舊碼。
@@ -745,7 +838,7 @@
 
       <!-- FAQ -->
       <section id="faq">
-        <h2>7. 常見問題 FAQ</h2>
+        <h2>8. 常見問題 FAQ</h2>
         <div class="faq">
           <details>
             <summary>客人說掃了 QR，但訂房頁沒看到加贈時間？</summary>
@@ -795,6 +888,23 @@
             <p>
               ① 確認已用有權限的旅館管理員帳號登入；②
               確認右上角已選到正確的飯店。若仍看不到，請聯繫系統管理者確認帳號權限與選單設定。
+            </p>
+          </details>
+          <details>
+            <summary>夥伴說登入不了對帳門戶？</summary>
+            <p>
+              請確認：① 該夥伴的「登入帳號」狀態為
+              <span class="badge b-ok">已啟用</span>（在「設定 › 合作夥伴」該列查看）；②
+              用的是建立時填的 Email；③
+              忘記密碼可在「帳號」視窗按<strong>「重設密碼」</strong>產生連結轉交夥伴。若帳號是
+              <span class="badge b-info">已停用</span>，請先「重新啟用」。
+            </p>
+          </details>
+          <details>
+            <summary>夥伴頁全是 0，但後台「合作結算」看得到他的金額？</summary>
+            <p>
+              正常情況兩邊應<strong>一致</strong>（同一權威金額）。若夥伴頁<strong>整頁是
+              0、但後台確實有該夥伴的結算單</strong>，多半是系統面問題（非「沒資料」），請<strong>聯絡工程</strong>檢查，毋須自行調整資料。
             </p>
           </details>
         </div>
