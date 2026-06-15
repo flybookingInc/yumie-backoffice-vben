@@ -1,4 +1,8 @@
-import type { SmsBillingStats, SmsRecord } from './types';
+import type {
+  SmsBillingStats,
+  SmsRecord,
+  SmsVerificationLookup,
+} from './types';
 
 import { requestClient } from '#/api/request';
 
@@ -26,6 +30,13 @@ export const smsApi = {
   records(params: SmsRecordsParams) {
     return requestClient.get<SmsRecord[]>('/sms/records', { params });
   },
+  /** POST /v2/sms/verification-code — 依電話查客人當下簡訊驗證碼（hotelId 自動帶入） */
+  verificationCode(phone: string) {
+    return requestClient.post<SmsVerificationLookup>(
+      '/sms/verification-code',
+      { phone },
+    );
+  },
 };
 
 export type {
@@ -33,4 +44,5 @@ export type {
   SmsBillingStats,
   SmsBillingTotals,
   SmsRecord,
+  SmsVerificationLookup,
 } from './types';

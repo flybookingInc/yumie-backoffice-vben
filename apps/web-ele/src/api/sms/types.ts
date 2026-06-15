@@ -35,3 +35,24 @@ export interface SmsBillingStats {
   rows: SmsBillingRow[];
   totals: SmsBillingTotals;
 }
+
+/**
+ * `/v2/sms/verification-code` 回應 — 櫃檯查客人當下簡訊驗證碼。
+ *
+ * `result`：not_found（查無）/ expired（過期，不回 code）/ revealed（有效，回明文 code）。
+ * `expiresAt` 為 legacy 有效邊界（= sentAt + 16 分，對齊後端截斷分鐘的揭露/驗證邏輯）；
+ * 前端倒數一律以此值為準，不自行用 15 分重算。
+ */
+export interface SmsVerificationLookup {
+  /** 明文驗證碼；僅 result==='revealed' 時非 null。 */
+  code: null | string;
+  expired: boolean;
+  /** ISO string；有效邊界（sentAt + 16 分）。 */
+  expiresAt: null | string;
+  found: boolean;
+  result: 'expired' | 'not_found' | 'revealed';
+  /** ISO string；發送時間。 */
+  sentAt: null | string;
+  status: string;
+  verified: boolean;
+}
