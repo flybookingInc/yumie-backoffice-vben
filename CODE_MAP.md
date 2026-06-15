@@ -104,7 +104,7 @@ src/
 
 每個業務模組一個資料夾，慣例：`index.ts`（API 方法）+ `types.ts`（型別）。模組：`core`(auth/menu/user)、`orders`、`customers`、`extras`、`hotels`、`inventory`、 `membership-benefits`、`memberships`(含 phone)、`partners`(異業合作)、`plans`、`room-types`、`sms`、`users`。
 
-範例（`api/orders/index.ts`）：`ordersApi.list()` / `.createByAdmin()` / `.updateStatus()`。
+範例（`api/orders/index.ts`）：`ordersApi.list()` / `.createByAdmin()` / `.updateStatus()`。`sms` 模組除 `records`/`billing` 外另有 `verificationCode(phone)`（櫃檯查當下驗證碼）與 `lookupLogs(range)`（superAdmin 查稽核）。
 
 ---
 
@@ -128,7 +128,7 @@ src/
 | `access.ts` | `accessMode='backend'` — 選單由後端 `/v2/menu/all` 產生（`getAllMenusApi`），前端只提供 component/layout map |
 | `guard.ts` | 三道守衛：`CommonGuard`（進度條）、`AccessGuard`（await authReady → token 檢查 → 生成動態路由）、`LoyaltyGuard`（requiresLoyalty 且飯店未啟用會員 → 擋下，superAdmin 例外） |
 
-選單樹（見 `routes/modules/yumie.ts`，但 `accessMode='backend'` 實際以 `/v2/menu/all` 為準）： `訂單`(occupy/booking)、`房況`(inventory/availability)、`加購`、 `數據`(customers*/sms/sms-billing*/partner-performance/partner-settlement)、`設定`(room-types/plans/partners/hotel/membership-benefits†/users*/super-admin*) 　　`*` = 限 superAdmin，`†` = requiresLoyalty。`partners`（合作夥伴）、`partner-performance`（合作成效，即時分析）、`partner-settlement`（合作結算，回饋帳本/月結/撥款）為異業合作功能，hotel-scoped admin 可管（非 superAdmin-only）。
+選單樹（見 `routes/modules/yumie.ts`，但 `accessMode='backend'` 實際以 `/v2/menu/all` 為準）： `訂單`(occupy/booking)、`房況`(inventory/availability)、`加購`、 `數據`(customers*/sms/sms-code-lookup/sms-lookup-audit*/sms-billing*/partner-performance/partner-settlement)、`設定`(room-types/plans/partners/hotel/membership-benefits†/users*/super-admin*) 　　`*` = 限 superAdmin，`†` = requiresLoyalty。`partners`（合作夥伴）、`partner-performance`（合作成效，即時分析）、`partner-settlement`（合作結算，回饋帳本/月結/撥款）為異業合作功能，hotel-scoped admin 可管（非 superAdmin-only）。`sms-code-lookup`（驗證碼查詢，所有 admin）讓櫃檯依電話查客人當下簡訊驗證碼念給收不到簡訊的客人；`sms-lookup-audit`（查詢稽核，superAdmin）列出每次查詢的稽核（操作者/IP/電話/結果）。
 
 預設首頁 `/orders/occupy`（見 `preferences.ts` 與 `auth-sync.ADMIN_HOME`）。
 
@@ -143,6 +143,7 @@ src/
 | `rooms/inventory.vue` · `rooms/availability.vue` | 房量 / 時段 |
 | `extras/index.vue` | 加購品項 |
 | `reports/customers.vue` · `reports/sms.vue` · `reports/sms-billing.vue` · `reports/partner-performance.vue` · `reports/partner-settlement.vue` | 數據報表（含異業合作成效 + 回饋帳本結算） |
+| `reports/sms-code-lookup.vue` · `reports/sms-lookup-audit.vue` | 驗證碼查詢（櫃檯依電話查當下驗證碼 + 倒數，所有 admin，呼叫 `smsApi.verificationCode`）/ 查詢稽核（superAdmin，`smsApi.lookupLogs` 列操作者/IP/電話/結果） |
 | `settings/*` | room-types / plans / partners / hotel / membership-benefits / users / super-admin（`partners` 含 QR + **夥伴登入帳號管理**：建立/停用/啟用/重設，呼叫 `api/partners` 的 `partnerAccountApi`；帳號狀態欄由 `accountStatus` 顯示） |
 | `memberships/manual-upgrade.vue` | 會員手動升級 |
 
