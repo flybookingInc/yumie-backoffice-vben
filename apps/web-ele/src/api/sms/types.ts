@@ -56,3 +56,21 @@ export interface SmsVerificationLookup {
   status: string;
   verified: boolean;
 }
+
+/**
+ * `/v2/sms/lookup-logs` 單筆 — 驗證碼查詢稽核紀錄（superAdmin only）。
+ */
+export interface SmsLookupLog {
+  id: string;
+  /** ISO string；查詢時間。 */
+  loggedAt: string;
+  operatorEmail: string;
+  /** 操作者真實 IP。 */
+  operatorIp: string;
+  operatorUid: string;
+  /** 被查詢的電話（10 碼）。 */
+  phone: string;
+  result: 'expired' | 'not_found' | 'revealed';
+  /** 對應 smsRecords doc id；查無為 null。 */
+  smsId: null | string;
+}

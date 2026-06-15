@@ -146,7 +146,7 @@ async function copyCode(): Promise<void> {
         type="warning"
         :closable="false"
         show-icon
-        :title="`驗證碼已過期（發送於 ${formatTime(result.sentAt)}）`"
+        title="此電話號碼查無 15 分鐘內的有效驗證碼"
         description="請客人於訂房頁重新發送驗證碼。"
       />
 

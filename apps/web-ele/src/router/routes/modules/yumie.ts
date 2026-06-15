@@ -101,6 +101,16 @@ const routes: RouteRecordRaw[] = [
         path: '/reports/sms-code-lookup',
       },
       {
+        component: () => import('#/views/yumie/reports/sms-lookup-audit.vue'),
+        meta: {
+          authority: ['superAdmin'],
+          icon: 'lucide:scroll-text',
+          title: '查詢稽核',
+        },
+        name: 'ReportsSmsLookupAudit',
+        path: '/reports/sms-lookup-audit',
+      },
+      {
         component: () => import('#/views/yumie/reports/sms-billing.vue'),
         meta: {
           authority: ['superAdmin'],

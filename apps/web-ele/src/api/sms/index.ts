@@ -1,5 +1,6 @@
 import type {
   SmsBillingStats,
+  SmsLookupLog,
   SmsRecord,
   SmsVerificationLookup,
 } from './types';
@@ -10,6 +11,13 @@ export interface SmsRecordsParams {
   /** YYYY-MM-DD */
   fromDate: string;
   hotelId?: string;
+  /** YYYY-MM-DD */
+  toDate: string;
+}
+
+export interface SmsLookupLogsParams {
+  /** YYYY-MM-DD */
+  fromDate: string;
   /** YYYY-MM-DD */
   toDate: string;
 }
@@ -25,6 +33,10 @@ export const smsApi = {
   /** GET /v2/sms/billing — superAdmin only */
   billing(params: SmsBillingParams) {
     return requestClient.get<SmsBillingStats>('/sms/billing', { params });
+  },
+  /** GET /v2/sms/lookup-logs — superAdmin only；驗證碼查詢稽核 */
+  lookupLogs(params: SmsLookupLogsParams) {
+    return requestClient.get<SmsLookupLog[]>('/sms/lookup-logs', { params });
   },
   /** GET /v2/sms/records */
   records(params: SmsRecordsParams) {
@@ -42,6 +54,7 @@ export type {
   SmsBillingRow,
   SmsBillingStats,
   SmsBillingTotals,
+  SmsLookupLog,
   SmsRecord,
   SmsVerificationLookup,
 } from './types';
