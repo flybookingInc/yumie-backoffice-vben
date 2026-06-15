@@ -152,7 +152,8 @@ async function copyCode(): Promise<void> {
 
       <div v-else-if="showCode" class="grid gap-3 text-center">
         <div class="text-sm text-gray-500">
-          {{ queriedPhone }} 的當下驗證碼（發送於 {{ formatTime(result.sentAt) }}）
+          {{ queriedPhone }} 的當下驗證碼（發送於
+          {{ formatTime(result.sentAt) }}）
         </div>
         <div
           class="font-mono tracking-widest"

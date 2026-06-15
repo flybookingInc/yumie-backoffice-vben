@@ -32,10 +32,9 @@ export const smsApi = {
   },
   /** POST /v2/sms/verification-code — 依電話查客人當下簡訊驗證碼（hotelId 自動帶入） */
   verificationCode(phone: string) {
-    return requestClient.post<SmsVerificationLookup>(
-      '/sms/verification-code',
-      { phone },
-    );
+    return requestClient.post<SmsVerificationLookup>('/sms/verification-code', {
+      phone,
+    });
   },
 };
 
