@@ -148,6 +148,27 @@ async function save(): Promise<void> {
   }
 }
 
+function partnerInputFromRow(row: Partner, active: boolean): PartnerInput {
+  return {
+    active,
+    contact: row.contact ?? '',
+    freeRestMinutes: row.freeRestMinutes,
+    minReservedMinutes: row.minReservedMinutes,
+    partnerName: row.partnerName,
+    rewardPerBooking: row.rewardPerBooking,
+  };
+}
+
+async function activate(row: Partner): Promise<void> {
+  try {
+    await partnersApi.update(row.code, partnerInputFromRow(row, true));
+    ElMessage.success('合作夥伴已啟用');
+    await load();
+  } catch {
+    // request interceptor 已 toast
+  }
+}
+
 async function deactivate(row: Partner): Promise<void> {
   try {
     await partnersApi.remove(row.code);
@@ -412,6 +433,17 @@ watch(currentHotelId, () => void load(), { immediate: true });
             >
               <template #reference>
                 <ElButton size="small" type="danger">停用</ElButton>
+              </template>
+            </ElPopconfirm>
+            <ElPopconfirm
+              v-else
+              title="確認啟用此推薦碼？"
+              confirm-button-text="啟用"
+              cancel-button-text="取消"
+              @confirm="activate(row as Partner)"
+            >
+              <template #reference>
+                <ElButton size="small" type="success">啟用</ElButton>
               </template>
             </ElPopconfirm>
           </template>
