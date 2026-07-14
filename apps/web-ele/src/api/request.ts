@@ -8,7 +8,7 @@
  * - hotelId 注入：依 method 與 payload 型態自動補（GET/DELETE → params；FormData → append；
  *   object → spread；無 body → `{ hotelId }`）
  * - Response 統一 `{ code, data, message }`（vben defaultResponseInterceptor，successCode=0）
- * - 401 → `useAuthStore().logout()`；不做 refresh（Firebase SDK 自動 refresh idToken）
+ * - 401 → 強制刷新 Firebase ID Token 後只重試一次；刷新失敗才登出
  */
 import type { RequestClientOptions } from '@vben/request';
 
@@ -100,7 +100,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     }),
   );
 
-  // 401 / token 失效 → 登出。不做 refresh — Firebase SDK 自動 refresh idToken。
+  // 401 / token 失效 → 強制刷新 Firebase ID Token 後只重試一次；仍失敗才登出。
   client.addResponseInterceptor(
     authenticateResponseInterceptor({
       client,
@@ -111,7 +111,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
         const u = firebaseAuth.currentUser;
         return u ? await u.getIdToken(true) : '';
       },
-      enableRefreshToken: false,
+      enableRefreshToken: true,
       formatToken,
     }),
   );
