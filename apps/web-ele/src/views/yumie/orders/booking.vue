@@ -29,6 +29,7 @@ import {
 import { ordersApi } from '#/api/orders';
 import { plansApi } from '#/api/plans';
 import { useHotelStore } from '#/store/hotel';
+import { taipeiDateTime } from '#/utils/datetime';
 
 defineOptions({ name: 'OrdersBookingPage' });
 
@@ -317,9 +318,7 @@ watch(
           {{ lastResult.verifyNumber ?? '-' }}
         </ElDescriptionsItem>
         <ElDescriptionsItem label="預約時間">
-          {{
-            lastResult.checkinDatetime?.slice(0, 19).replace('T', ' ') ?? '-'
-          }}
+          {{ taipeiDateTime(lastResult.checkinDatetime) }}
         </ElDescriptionsItem>
         <ElDescriptionsItem label="方案">
           {{ lastResult.plan_name ?? '-' }}

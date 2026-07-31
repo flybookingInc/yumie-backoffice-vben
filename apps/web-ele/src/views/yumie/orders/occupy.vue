@@ -22,6 +22,7 @@ import {
 import { ordersApi } from '#/api/orders';
 import { useOrdersSnapshot } from '#/composables/useOrdersSnapshot';
 import { useHotelStore } from '#/store/hotel';
+import { taipeiTime } from '#/utils/datetime';
 
 defineOptions({ name: 'OrdersOccupyPage' });
 
@@ -254,7 +255,8 @@ function isTimeGroupRow(row: TableRow): row is TimeGroupRow {
 }
 
 function orderTime(row: Order): string {
-  return row.checkInTime || row.checkinDatetime?.slice(11, 16) || '-';
+  // checkInTime 已是台灣時間；fallback 的 checkinDatetime 是 UTC ISO，要換算
+  return row.checkInTime || taipeiTime(row.checkinDatetime);
 }
 
 function rowKey(row: TableRow): string {
