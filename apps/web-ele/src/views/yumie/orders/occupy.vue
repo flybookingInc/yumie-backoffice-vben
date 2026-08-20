@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { ExtraBuyItem, Order } from '#/api/orders';
 
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import { useUserStore } from '@vben/stores';
 
@@ -23,6 +23,8 @@ import { ordersApi } from '#/api/orders';
 import { useOrdersSnapshot } from '#/composables/useOrdersSnapshot';
 import { useHotelStore } from '#/store/hotel';
 import { taipeiTime } from '#/utils/datetime';
+
+import { canRefundCancel as isRefundCancelAvailable } from './refund-cancel';
 
 defineOptions({ name: 'OrdersOccupyPage' });
 
@@ -46,6 +48,8 @@ const userStore = useUserStore();
 
 const rows = ref<Order[]>([]);
 const loading = ref(false);
+const refundCancelNow = ref(Date.now());
+let refundCancelTimer: number | undefined;
 
 function todayTaipei(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
@@ -64,6 +68,10 @@ const showLoyaltyColumns = computed(
   () => loyaltyEnabled.value || isSuperAdmin.value,
 );
 const tableColumnCount = computed(() => (showLoyaltyColumns.value ? 11 : 8));
+
+function canShowRefundCancel(row: Order): boolean {
+  return isRefundCancelAvailable(row, refundCancelNow.value);
+}
 
 /**
  * 訂單統計：
@@ -319,6 +327,16 @@ watch(_firestoreOrders, () => {
   }
   void reloadSilentlyDebounced();
 });
+
+onMounted(() => {
+  refundCancelTimer = window.setInterval(() => {
+    refundCancelNow.value = Date.now();
+  }, 30_000);
+});
+
+onBeforeUnmount(() => {
+  if (refundCancelTimer !== undefined) window.clearInterval(refundCancelTimer);
+});
 </script>
 
 <template>
@@ -536,6 +554,7 @@ watch(_firestoreOrders, () => {
               <template v-else-if="(row as Order).status === '抵達'">
                 <ElTag type="success" size="small">抵達</ElTag>
                 <ElPopconfirm
+                  v-if="canShowRefundCancel(row as Order)"
                   title="確定退款取消？尚未發放的點數會一併取消。"
                   confirm-button-text="退款取消"
                   cancel-button-text="返回"
