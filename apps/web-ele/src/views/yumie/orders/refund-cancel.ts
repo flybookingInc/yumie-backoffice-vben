@@ -1,9 +1,5 @@
 import type { Order } from '#/api/orders';
 
-const CHECKED_OUT_FLY_KIOSK_STATUSES = new Set([
-  'checked_out',
-  'not_confirmed',
-]);
 const MINUTES_IN_MILLISECONDS = 60_000;
 
 type RefundCancelOrder = Pick<
@@ -11,14 +7,9 @@ type RefundCancelOrder = Pick<
   | 'checkInDate'
   | 'checkinDatetime'
   | 'checkInTime'
-  | 'flyKioskPmsStatus'
   | 'reservedMinutes'
   | 'status'
 >;
-
-function isCheckedOutPmsStatus(status?: string): boolean {
-  return CHECKED_OUT_FLY_KIOSK_STATUSES.has(status?.trim().toLowerCase() ?? '');
-}
 
 function checkinTimestamp(order: RefundCancelOrder): null | number {
   if (order.checkinDatetime) {
@@ -43,7 +34,6 @@ export function canRefundCancel(
   now: Date | number = Date.now(),
 ): boolean {
   if (order.status !== '抵達') return false;
-  if (isCheckedOutPmsStatus(order.flyKioskPmsStatus)) return false;
 
   const checkinAt = checkinTimestamp(order);
   if (
