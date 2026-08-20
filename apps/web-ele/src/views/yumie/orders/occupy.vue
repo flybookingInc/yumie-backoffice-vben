@@ -202,6 +202,21 @@ async function cancel(row: Order): Promise<void> {
   }
 }
 
+/**
+ * 客人 check-in 後對房間不滿意要求退費。與一般取消的差別只在時機——訂單已抵達，
+ * 所以入口分開、文案講明是退款。後端收到 CanceledByAdmin 會釋放折抵的點數，
+ * 並清掉尚未發出的發點排程。實際退款金流仍由櫃台在 PMS / 金流端處理。
+ */
+async function refundCancel(row: Order): Promise<void> {
+  try {
+    await ordersApi.updateStatus(row.id, 'CanceledByAdmin');
+    row.status = 'CanceledByAdmin';
+    ElMessage.success('已退款取消，點數不會發放');
+  } catch {
+    // interceptor toasted
+  }
+}
+
 async function markNoShow(row: Order): Promise<void> {
   try {
     await ordersApi.updateStatus(row.id, 'NoShow');
@@ -520,6 +535,19 @@ watch(_firestoreOrders, () => {
               </template>
               <template v-else-if="(row as Order).status === '抵達'">
                 <ElTag type="success" size="small">抵達</ElTag>
+                <ElPopconfirm
+                  title="確定退款取消？尚未發放的點數會一併取消。"
+                  confirm-button-text="退款取消"
+                  cancel-button-text="返回"
+                  width="260"
+                  @confirm="refundCancel(row as Order)"
+                >
+                  <template #reference>
+                    <ElButton size="small" type="danger" link>
+                      退款取消
+                    </ElButton>
+                  </template>
+                </ElPopconfirm>
               </template>
               <template v-else>
                 <ElPopconfirm
