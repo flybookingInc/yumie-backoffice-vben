@@ -161,7 +161,7 @@ async function openDetail(referralCode: string): Promise<void> {
 }
 
 const statusTag = (s: string): 'danger' | 'info' | 'success' | 'warning' =>
-  s === 'settled' ? 'success' : (s === 'pending' ? 'warning' : 'info');
+  s === 'settled' ? 'success' : s === 'pending' ? 'warning' : 'info';
 
 watch(
   [currentHotelId, month],
@@ -178,8 +178,10 @@ watch(
     <ElCard>
       <template #header>
         <div class="flex items-center justify-between">
-          <span>合作結算 —
-            {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}</span>
+          <span
+            >合作結算 —
+            {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}</span
+          >
           <ElSpace>
             <ElDatePicker
               v-model="month"

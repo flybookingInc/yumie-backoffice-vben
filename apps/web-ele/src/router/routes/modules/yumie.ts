@@ -79,6 +79,12 @@ const routes: RouteRecordRaw[] = [
   {
     children: [
       {
+        component: () => import('#/views/yumie/reports/yumie-credit.vue'),
+        meta: { icon: 'lucide:coins', title: 'Yumie 金扣抵報表' },
+        name: 'ReportsYumieCredit',
+        path: '/reports/yumie-credit',
+      },
+      {
         component: () => import('#/views/yumie/reports/customers.vue'),
         meta: {
           authority: ['superAdmin'],

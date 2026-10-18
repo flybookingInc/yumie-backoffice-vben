@@ -94,8 +94,10 @@ watch([currentHotelId, range], () => void load(), { immediate: true });
     <ElCard>
       <template #header>
         <div class="flex items-center justify-between">
-          <span>合作成效 —
-            {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}</span>
+          <span
+            >合作成效 —
+            {{ hotelStore.currentHotelMeta?.hotelName ?? currentHotelId }}</span
+          >
           <ElSpace>
             <ElDatePicker
               v-model="range"

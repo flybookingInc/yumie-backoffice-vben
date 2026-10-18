@@ -44,6 +44,7 @@
     "@vueuse/core": "catalog:",
     "dayjs": "catalog:",
     "element-plus": "catalog:",
+    "exceljs": "4.4.0",
     "firebase": "^10.14.1",
     "libphonenumber-js": "^1.13.3",
     "pinia": "catalog:",
@@ -53,6 +54,7 @@
   },
   "devDependencies": {
     "@types/qrcode": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
     "unplugin-element-plus": "catalog:"
   }
 }
