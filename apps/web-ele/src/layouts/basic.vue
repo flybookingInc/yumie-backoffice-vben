@@ -13,6 +13,7 @@ import { useAccessStore, useUserStore } from '@vben/stores';
 import HotelDocSubscriber from '#/components/HotelDocSubscriber.vue';
 import HotelSwitcher from '#/components/HotelSwitcher.vue';
 import { useAuthStore } from '#/store';
+import { useHotelStore } from '#/store/hotel';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
 const notifications = ref<NotificationItem[]>([]);
@@ -20,6 +21,7 @@ const notifications = ref<NotificationItem[]>([]);
 const router = useRouter();
 const userStore = useUserStore();
 const authStore = useAuthStore();
+const hotelStore = useHotelStore();
 const accessStore = useAccessStore();
 const { destroyWatermark, updateWatermark } = useWatermark();
 const { isDark } = usePreferences();
@@ -128,7 +130,11 @@ watch(
 </script>
 
 <template>
-  <BasicLayout @clear-preferences-and-logout="handleLogout">
+  <!-- Recreate the layout cache when switching hotels. -->
+  <BasicLayout
+    :key="hotelStore.currentHotelId"
+    @clear-preferences-and-logout="handleLogout"
+  >
     <!-- vben header dynamic slots must be header-{left|right}-<index>; 45 places it left of global-search (50) -->
     <template #header-right-45>
       <div class="mr-2">

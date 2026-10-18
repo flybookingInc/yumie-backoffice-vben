@@ -1,4 +1,4 @@
-import { initPreferences } from '@vben/preferences';
+import { initPreferences, updatePreferences } from '@vben/preferences';
 import { unmountGlobalLoading } from '@vben/utils';
 
 import { overridesPreferences } from './preferences';
@@ -18,6 +18,9 @@ async function initApplication() {
     namespace,
     overrides: overridesPreferences,
   });
+
+  // Disable page transitions even when older browser preferences enabled them.
+  updatePreferences({ transition: { enable: false } });
 
   // 启动应用并挂载
   // vue应用主要逻辑及视图

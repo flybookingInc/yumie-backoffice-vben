@@ -9,6 +9,8 @@ import { preferences } from '@vben/preferences';
 import { getAllMenusApi } from '#/api/core/menu';
 import { BasicLayout, IFrameView } from '#/layouts';
 
+import { withDefaultKeepAlive } from './keep-alive';
+
 const forbiddenComponent = () => import('#/views/_core/fallback/forbidden.vue');
 
 /**
@@ -25,10 +27,12 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
 
   return await generateAccessible(preferences.app.accessMode, {
     ...options,
-    fetchMenuListAsync: getAllMenusApi,
+    fetchMenuListAsync: async () =>
+      withDefaultKeepAlive(await getAllMenusApi()),
     forbiddenComponent,
     layoutMap,
     pageMap,
+    routes: withDefaultKeepAlive(options.routes),
   });
 }
 

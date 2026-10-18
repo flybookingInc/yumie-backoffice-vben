@@ -21,8 +21,14 @@ export const overridesPreferences = defineOverridesPreferences({
     source: '/assets/images/logo_black.png',
     sourceDark: '/assets/images/logo_white.png',
   },
+  tabbar: {
+    keepAlive: true,
+  },
   theme: {
     mode: 'light',
+  },
+  transition: {
+    enable: false,
   },
   widget: {
     lockScreen: false,
