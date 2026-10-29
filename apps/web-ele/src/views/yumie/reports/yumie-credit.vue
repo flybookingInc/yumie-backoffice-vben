@@ -361,18 +361,13 @@ onBeforeUnmount(() => {
       <div
         class="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground"
       >
-        <span data-testid="applied-filter"
-          >{{
+        <span data-testid="applied-filter">{{
             report.filters.mode === 'stay' ? '入住訂單統計' : '扣退流水'
           }}：{{ report.filters.startDate }} 至 {{ report.filters.endDate
           }}<span v-if="report.filters.search">
-            · 搜尋「{{ report.filters.search }}」</span
-          ></span
-        >
-        <span
-          >資料截至
-          {{ taipeiDateTime(report.asOf) }}；匯出與分頁沿用本次查詢結果</span
-        >
+            · 搜尋「{{ report.filters.search }}」</span></span>
+        <span>資料截至
+          {{ taipeiDateTime(report.asOf) }}；匯出與分頁沿用本次查詢結果</span>
       </div>
       <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <ElCard v-for="metric in metrics" :key="metric.label" shadow="never">
@@ -513,9 +508,7 @@ onBeforeUnmount(() => {
         <template #header>
           <div class="flex flex-wrap justify-between gap-2">
             <span>扣抵／退還明細（共 {{ report.total }} 筆）</span>
-            <span class="text-sm text-muted-foreground"
-              >每筆扣抵一列，退還列於原扣抵紀錄；統計涵蓋全部查詢結果。</span
-            >
+            <span class="text-sm text-muted-foreground">每筆扣抵一列，退還列於原扣抵紀錄；統計涵蓋全部查詢結果。</span>
           </div>
         </template>
         <ElTable
