@@ -38,3 +38,31 @@ export function parseClaims(raw: ParsedToken): ParsedClaims {
   }
   return { hotelGroup: hotelGroup as string[], rule };
 }
+
+/**
+ * 後台 Email 驗證碼：admin / superAdmin 的 token 要帶 30 天內的 `mfaAt`（驗證時間，epoch 秒），
+ * 由後端 `POST /v2/admin-auth/verify` 發的 custom token 加上。規則與後端
+ * functions/src/auth/adminMfa.ts、Firestore rules 相同（30 天、容許 5 分鐘時鐘誤差）。
+ */
+export const ADMIN_MFA_VALID_SECONDS = 30 * 24 * 60 * 60;
+const CLOCK_SKEW_SECONDS = 300;
+
+export class AdminMfaRequiredError extends Error {
+  constructor() {
+    super('需要 Email 驗證碼');
+    this.name = 'AdminMfaRequiredError';
+  }
+}
+
+export function isAdminMfaFresh(
+  raw: ParsedToken,
+  nowSec: number = Date.now() / 1000,
+): boolean {
+  if (raw.rule !== 'admin' && raw.rule !== 'superAdmin') return true;
+  const mfaAt = raw.mfaAt;
+  return (
+    typeof mfaAt === 'number' &&
+    mfaAt <= nowSec + CLOCK_SKEW_SECONDS &&
+    nowSec - mfaAt < ADMIN_MFA_VALID_SECONDS
+  );
+}
