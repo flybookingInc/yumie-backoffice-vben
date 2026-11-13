@@ -3,6 +3,8 @@ import type { Customer } from '#/api/customers';
 
 import { computed, ref, watch } from 'vue';
 
+import { useDebounceFn } from '@vueuse/core';
+
 import {
   ElButton,
   ElCard,
@@ -25,14 +27,14 @@ const hotelStore = useHotelStore();
 const customers = ref<Customer[]>([]);
 const loading = ref(false);
 const search = ref('');
-type DateRangeFilter = '30d' | '90d' | '365d';
+// 後端起訖最多 92 天（避免一次撈出整館客戶電話簿），所以沒有「一年」
+type DateRangeFilter = '30d' | '90d';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const rangeFilter = ref<DateRangeFilter>('90d');
 const rangeOptions = [
   { label: '30 天', value: '30d' },
   { label: '90 天', value: '90d' },
-  { label: '一年', value: '365d' },
 ] as const satisfies { label: string; value: DateRangeFilter }[];
 
 const currentHotelId = computed(() => hotelStore.currentHotelId);
@@ -44,13 +46,20 @@ function buildListParams(): { since: string; until: string } {
   const daysByRange = {
     '30d': 30,
     '90d': 90,
-    '365d': 365,
   } as const satisfies Record<DateRangeFilter, number>;
   const since = new Date(
     nowMs - daysByRange[rangeFilter.value] * MS_PER_DAY,
   ).toISOString();
   return { since, until };
 }
+
+/** 搜尋框是不是一支完整電話（至少 8 碼數字）→ 交給後端比對（列表只有遮罩電話） */
+function fullPhoneOf(keyword: string): string {
+  return keyword.replaceAll(/\D/g, '').length >= 8 ? keyword : '';
+}
+
+/** 用完整電話向後端查到的客戶；null = 沒有在用電話查 */
+const phoneMatches = ref<Customer[] | null>(null);
 
 async function load(): Promise<void> {
   const hotelId = currentHotelId.value;
@@ -65,9 +74,40 @@ async function load(): Promise<void> {
   }
 }
 
+async function searchByPhone(phone: string): Promise<void> {
+  const hotelId = currentHotelId.value;
+  if (!hotelId) return;
+  loading.value = true;
+  try {
+    const { customers: list } = await customersApi.list({
+      ...buildListParams(),
+      phone,
+    });
+    if (currentHotelId.value !== hotelId || fullPhoneOf(search.value.trim()) !== phone) {
+      return;
+    }
+    phoneMatches.value = list;
+  } finally {
+    loading.value = false;
+  }
+}
+
+const searchPhoneDebounced = useDebounceFn((phone: string) => {
+  void searchByPhone(phone);
+}, 400);
+
 watch([currentHotelId, rangeFilter], () => void load(), { immediate: true });
+watch([search, currentHotelId, rangeFilter], () => {
+  const phone = fullPhoneOf(search.value.trim());
+  if (phone) {
+    searchPhoneDebounced(phone);
+  } else {
+    phoneMatches.value = null;
+  }
+});
 
 const filteredRows = computed<Customer[]>(() => {
+  if (phoneMatches.value) return phoneMatches.value;
   const kw = search.value.trim();
   if (!kw) return customers.value;
   return customers.value.filter(
@@ -156,7 +196,7 @@ async function refresh(): Promise<void> {
             </ElSelect>
             <ElInput
               v-model="search"
-              placeholder="搜尋電話 / 客戶 ID / 方案名稱"
+              placeholder="完整電話 / 客戶 ID / 方案名稱"
               clearable
               style="width: 280px"
             />
@@ -168,7 +208,7 @@ async function refresh(): Promise<void> {
       <ElTable
         :data="filteredRows"
         border
-        row-key="guestPhone"
+        row-key="key"
         size="small"
         :default-sort="{ prop: 'lastOrderAt', order: 'descending' }"
       >

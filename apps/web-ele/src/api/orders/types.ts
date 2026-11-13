@@ -3,7 +3,7 @@
  *
  * v2 後端已處理：
  * - snake_case → camelCase（customer_id → customerId，check_in_date → checkInDate, etc.）
- * - phone_number AES 解密 → guestPhone（plain）
+ * - guestPhone 是遮罩電話（0912***678）；完整電話要按「顯示電話」單筆查看（每天有上限）
  * - 價格 / reservedMinutes string → number
  * - extraBuy '' → { items: [] }
  *
@@ -42,7 +42,10 @@ export interface Order {
   flyKioskCode?: string;
   flyKioskPmsId?: string;
   flyKioskPmsStatus?: string;
+  /** 遮罩電話（0912***678）；完整電話用 ordersApi.revealGuestPhone 單筆查看 */
   guestPhone: string;
+  /** 這次列表裡同一支電話出現超過一次（後端用完整電話判斷） */
+  guestPhoneDuplicate?: boolean;
   id: string;
   loyalty?: unknown;
   loyaltyPrivacyMode?: boolean;
