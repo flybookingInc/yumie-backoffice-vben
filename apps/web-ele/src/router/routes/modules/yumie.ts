@@ -80,7 +80,12 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         component: () => import('#/views/yumie/reports/yumie-credit.vue'),
-        meta: { icon: 'lucide:coins', title: 'Yumie 金扣抵報表' },
+        // 會員功能（Yumie 金扣抵）：沒開會員的旅館，非 superAdmin 由 guard 擋（與後端選單的 requiresLoyalty 一致）
+        meta: {
+          icon: 'lucide:coins',
+          requiresLoyalty: true,
+          title: 'Yumie 金扣抵報表',
+        },
         name: 'ReportsYumieCredit',
         path: '/reports/yumie-credit',
       },
