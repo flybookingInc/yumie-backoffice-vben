@@ -13,6 +13,8 @@ export interface HotelSummary {
   hotelPhone?: string;
   loyaltyEnabled: boolean;
   notifyEmail?: string;
+  /** 合作夥伴功能（superAdmin 逐館開關；沒設定＝關） */
+  partnerProgramEnabled: boolean;
 }
 
 /** /v2/hotels/:id detail — 完整 hotel doc，extra fields 視 Firestore 而定 */
@@ -32,6 +34,7 @@ export interface HotelDoc {
   hotelPhone?: string;
   loyalty?: { enabled: boolean };
   notifyEmail?: string;
+  partnerProgram?: { enabled: boolean };
   timezone?: string;
   weekend?: number[];
 }

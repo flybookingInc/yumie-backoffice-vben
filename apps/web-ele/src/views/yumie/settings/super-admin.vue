@@ -116,6 +116,19 @@ async function toggleLoyalty(row: HotelSummary, value: boolean): Promise<void> {
   }
 }
 
+async function togglePartnerProgram(
+  row: HotelSummary,
+  value: boolean,
+): Promise<void> {
+  try {
+    await hotelsApi.togglePartnerProgram(row.hotelId, value);
+    row.partnerProgramEnabled = value;
+    ElMessage.success(value ? '已開啟合作夥伴' : '已關閉合作夥伴');
+  } catch {
+    // interceptor toasted
+  }
+}
+
 async function toggleDisabled(
   row: HotelSummary,
   value: boolean,
@@ -172,6 +185,19 @@ onMounted(load);
               inactive-text="關"
               inline-prompt
               @change="(v) => toggleLoyalty(row as HotelSummary, v as boolean)"
+            />
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="合作夥伴" width="120" align="center">
+          <template #default="{ row }">
+            <ElSwitch
+              :model-value="(row as HotelSummary).partnerProgramEnabled"
+              active-text="開"
+              inactive-text="關"
+              inline-prompt
+              @change="
+                (v) => togglePartnerProgram(row as HotelSummary, v as boolean)
+              "
             />
           </template>
         </ElTableColumn>

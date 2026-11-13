@@ -68,6 +68,15 @@ const rules: FormRules = {
 };
 
 const currentHotelId = computed(() => hotelStore.currentHotelId);
+/** 館別合作夥伴開關（superAdmin 在「設定 → 旅館」切換；沒設定＝關） */
+const partnerProgramEnabled = computed(
+  () =>
+    (
+      hotelStore.currentHotelMeta as null | {
+        partnerProgram?: { enabled?: boolean };
+      }
+    )?.partnerProgram?.enabled === true,
+);
 
 function resetForm(): void {
   editingCode.value = '';
@@ -357,6 +366,15 @@ watch(currentHotelId, () => void load(), { immediate: true });
 
 <template>
   <div class="p-4">
+    <ElAlert
+      v-if="!partnerProgramEnabled"
+      class="mb-4"
+      type="warning"
+      :closable="false"
+      show-icon
+      title="此館尚未開啟合作夥伴功能"
+      description="目前只有 superAdmin 看得到這頁；推薦碼不會加贈時間也不計回饋，合作夥伴也登不進入口。要使用請到「設定 → 旅館」打開「合作夥伴」。"
+    />
     <ElCard>
       <template #header>
         <div class="flex items-center justify-between">

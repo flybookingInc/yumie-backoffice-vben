@@ -32,6 +32,13 @@ export const hotelsApi = {
       hotelId: string;
     }>(`/hotels/${id}/loyalty/config`);
   },
+  /** PUT /v2/hotels/:id/partners/toggle — superAdmin（合作夥伴功能開關） */
+  togglePartnerProgram(id: string, enabled: boolean) {
+    return requestClient.put<{
+      hotelId: string;
+      partnerProgramEnabled: boolean;
+    }>(`/hotels/${id}/partners/toggle`, { enabled });
+  },
   /** PUT /v2/hotels/:id/loyalty/toggle — superAdmin */
   toggleLoyalty(id: string, enabled: boolean) {
     return requestClient.put<{ hotelId: string; loyaltyEnabled: boolean }>(
