@@ -2,7 +2,7 @@
  * Customer (v3 新增) — 從 orders subcollection 聚合出每個獨特電話的訪客資料。
  *
  * Firestore 來源：`qk-list/{hotelId}/orders/*`
- * 聚合 key：`guestPhone`（解密後 E.164 電話）
+ * 聚合 key：後端用完整電話聚合；回傳只給遮罩電話（0912***678）與這次的列編號 key
  */
 export interface Customer {
   /** 取消訂單次數（Canceled + CanceledByAdmin） */
@@ -13,8 +13,10 @@ export interface Customer {
   customerId?: string;
   /** 第一次訂單時間（ISO bookingDatetime） */
   firstOrderAt: string;
-  /** 解密後的 E.164 電話，作為唯一識別 */
+  /** 遮罩電話（0912***678） */
   guestPhone: string;
+  /** 這次回傳的列編號（table row-key 用） */
+  key: string;
   /** 最近一次訂單時間（ISO） */
   lastOrderAt: string;
   /** 最近一筆訂單的方案名稱 */
@@ -35,7 +37,9 @@ export interface CustomerListResponse {
 }
 
 export interface CustomerListParams {
-  /** ISO datetime lower bound for order booking_datetime. */
+  /** 完整電話：只回這位客人（伺服器端比對） */
+  phone?: string;
+  /** ISO datetime lower bound for order booking_datetime（起訖最多 92 天）. */
   since?: string;
   /** ISO datetime upper bound for order booking_datetime. */
   until?: string;

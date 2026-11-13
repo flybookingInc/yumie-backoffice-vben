@@ -148,18 +148,32 @@ const duplicateQkNumbers = computed(() => {
   }
   return new Set([...seen.entries()].filter(([, c]) => c > 1).map(([k]) => k));
 });
-const duplicatePhones = computed(() => {
-  const seen = new Map<string, number>();
-  for (const r of rows.value) {
-    if (!r.guestPhone) continue;
-    seen.set(r.guestPhone, (seen.get(r.guestPhone) ?? 0) + 1);
+/** 已按「顯示電話」的完整號碼（只存在這個頁面，換日期／重新整理就清掉） */
+const revealedPhones = ref<Record<string, string>>({});
+const revealingId = ref('');
+
+async function revealPhone(row: Order): Promise<void> {
+  revealingId.value = row.id;
+  try {
+    const result = await ordersApi.revealGuestPhone(row.id);
+    revealedPhones.value = {
+      ...revealedPhones.value,
+      [row.id]: result.phone || '（無電話）',
+    };
+    if (typeof result.remaining === 'number' && result.remaining <= 5) {
+      ElMessage.warning(`今天還可以查看 ${result.remaining} 次完整電話`);
+    }
+  } catch {
+    // 錯誤訊息（例如「今日查看電話次數已達上限，請聯絡管理員」）由 request client 顯示
+  } finally {
+    revealingId.value = '';
   }
-  return new Set([...seen.entries()].filter(([, c]) => c > 1).map(([k]) => k));
-});
+}
 
 async function load(): Promise<void> {
   const hotelId = currentHotelId.value;
   rows.value = [];
+  revealedPhones.value = {};
   if (!hotelId) return;
   loading.value = true;
   try {
@@ -495,18 +509,35 @@ onBeforeUnmount(() => {
           <ElTableColumn
             label="電話"
             prop="guestPhone"
-            width="160"
+            width="190"
             align="center"
           >
             <template #default="{ row }">
               <template v-if="!isTimeGroupRow(row as TableRow)">
-                <span>{{ (row as Order).guestPhone || '-' }}</span>
+                <span>{{
+                  revealedPhones[(row as Order).id] ||
+                  (row as Order).guestPhone ||
+                  '-'
+                }}</span>
+                <ElButton
+                  v-if="
+                    (row as Order).guestPhone &&
+                    !revealedPhones[(row as Order).id]
+                  "
+                  link
+                  size="small"
+                  type="primary"
+                  style="margin-left: 4px"
+                  :loading="revealingId === (row as Order).id"
+                  @click="revealPhone(row as Order)"
+                >
+                  顯示
+                </ElButton>
               </template>
               <ElTag
                 v-if="
                   !isTimeGroupRow(row as TableRow) &&
-                  (row as Order).guestPhone &&
-                  duplicatePhones.has((row as Order).guestPhone)
+                  (row as Order).guestPhoneDuplicate
                 "
                 size="small"
                 type="warning"
