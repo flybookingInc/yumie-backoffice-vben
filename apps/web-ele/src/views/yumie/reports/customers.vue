@@ -4,7 +4,6 @@ import type { Customer } from '#/api/customers';
 import { computed, ref, watch } from 'vue';
 
 import { useDebounceFn } from '@vueuse/core';
-
 import {
   ElButton,
   ElCard,
@@ -83,7 +82,10 @@ async function searchByPhone(phone: string): Promise<void> {
       ...buildListParams(),
       phone,
     });
-    if (currentHotelId.value !== hotelId || fullPhoneOf(search.value.trim()) !== phone) {
+    if (
+      currentHotelId.value !== hotelId ||
+      fullPhoneOf(search.value.trim()) !== phone
+    ) {
       return;
     }
     phoneMatches.value = list;
