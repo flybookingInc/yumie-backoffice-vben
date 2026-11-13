@@ -20,10 +20,15 @@ import { onIdTokenChanged } from 'firebase/auth';
 
 import { useHotelStore } from '#/store/hotel';
 
-import { InvalidClaimsError, parseClaims } from './claims';
+import {
+  AdminMfaRequiredError,
+  InvalidClaimsError,
+  isAdminMfaFresh,
+  parseClaims,
+} from './claims';
 import { firebaseAuth } from './init';
 
-export { InvalidClaimsError };
+export { AdminMfaRequiredError, InvalidClaimsError };
 
 const ADMIN_HOME = '/orders/occupy';
 
@@ -37,6 +42,10 @@ export async function syncFirebaseUserToStores(
   if (user) {
     const tokenResult = await user.getIdTokenResult();
     const claims = parseClaims(tokenResult.claims);
+    // 只用密碼登入（或驗證超過 30 天）的 token 不算登入完成：後端 API 與 Firestore rules 都會擋
+    if (!isAdminMfaFresh(tokenResult.claims)) {
+      throw new AdminMfaRequiredError();
+    }
 
     accessStore.setAccessToken(tokenResult.token);
     accessStore.setAccessCodes([claims.rule]);
@@ -77,6 +86,12 @@ export function setupAuthListener(): void {
     try {
       await syncFirebaseUserToStores(user);
     } catch (error) {
+      if (error instanceof AdminMfaRequiredError) {
+        // 密碼正確但還沒輸入 Email 驗證碼：清空畫面狀態，但不登出
+        // （登入流程正在等使用者輸入驗證碼；30 天到期時會回登入頁重新驗證）
+        await syncFirebaseUserToStores(null);
+        return;
+      }
       console.error('syncFirebaseUserToStores failed:', error);
       try {
         await syncFirebaseUserToStores(null);

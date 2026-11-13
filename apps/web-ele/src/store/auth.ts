@@ -15,6 +15,11 @@ import {
   InvalidClaimsError,
   syncFirebaseUserToStores,
 } from '#/firebase/auth-sync';
+import { isAdminMfaFresh, parseClaims } from '#/firebase/claims';
+import {
+  completeEmailCodeStep,
+  EmailCodeCancelledError,
+} from '#/firebase/email-code-step';
 import { firebaseAuth } from '#/firebase/init';
 import { $t } from '#/locales';
 
@@ -48,8 +53,16 @@ export const useAuthStore = defineStore('auth', () => {
         params.username,
         params.password,
       );
-      await cred.user.getIdToken(true);
-      await syncFirebaseUserToStores(cred.user);
+      const passwordToken = await cred.user.getIdTokenResult(true);
+      // 先確認是後台帳號（不是的話直接 InvalidClaimsError，不寄驗證碼）
+      parseClaims(passwordToken.claims);
+      // 第二步：這台電腦 30 天內沒有通過 Email 驗證碼 → 寄碼、輸入、換成帶 mfaAt 的登入
+      if (!isAdminMfaFresh(passwordToken.claims)) {
+        await completeEmailCodeStep(cred.user);
+      }
+      const user = firebaseAuth.currentUser ?? cred.user;
+      await user.getIdToken(true);
+      await syncFirebaseUserToStores(user);
 
       const userInfo = userStore.userInfo;
       if (accessStore.loginExpired) {
@@ -81,7 +94,13 @@ export const useAuthStore = defineStore('auth', () => {
       } catch {
         // swallow
       }
-      if (error instanceof InvalidClaimsError) {
+      if (error instanceof EmailCodeCancelledError) {
+        ElNotification({
+          message: '已取消 Email 驗證碼，請重新登入',
+          title: '登入取消',
+          type: 'info',
+        });
+      } else if (error instanceof InvalidClaimsError) {
         ElNotification({
           message: '此帳號未設定正確的角色或飯店權限，請聯絡管理員',
           title: '登入失敗',
