@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@vben/stores';
 
 import {
+  ElAlert,
   ElButton,
   ElCard,
   ElCheckbox,
@@ -300,8 +301,12 @@ function hydrate(doc: HotelDoc): void {
   });
 }
 
+/**
+ * 存檔內容。PMS 串接與 GTM 只有 superAdmin 能改（後端 `PUT /v2/hotels/:id` 對 admin
+ * 也會略過），所以 admin 存檔時不送這三個欄位。
+ */
 function serialize(): Record<string, unknown> {
-  return {
+  const payload: Record<string, unknown> = {
     address: {
       'zh-TW': {
         addressCountryCode: form.addressCountryCode,
@@ -315,17 +320,8 @@ function serialize(): Record<string, unknown> {
     confirmScreenFooterMessage: form.confirmScreenFooterMessage,
     coverPhoto: form.coverPhoto,
     disabled: form.disabled,
-    flyKioskApi: {
-      enabled: form.flyKioskApiEnabled,
-      failAlertEmail: form.flyKioskFailAlertEmail,
-      hotelCode: form.flyKioskHotelCode,
-    },
     footerMessage: form.footerMessage,
     fullyBookShowingMessage: form.fullyBookShowingMessage,
-    googleTagManager: {
-      enable: form.googleTagManagerEnable,
-      id: form.googleTagManagerId,
-    },
     headerMessage: form.headerMessage,
     hotelAddress: form.hotelAddress,
     hotelDescription: form.hotelDescription,
@@ -346,12 +342,24 @@ function serialize(): Record<string, unknown> {
       hasEmptyParkingLot: form.parkingHasEmpty,
     },
     weekend: form.weekend,
-    wisePmsApi: {
+  };
+  if (isSuperAdmin.value) {
+    payload.flyKioskApi = {
+      enabled: form.flyKioskApiEnabled,
+      failAlertEmail: form.flyKioskFailAlertEmail,
+      hotelCode: form.flyKioskHotelCode,
+    };
+    payload.googleTagManager = {
+      enable: form.googleTagManagerEnable,
+      id: form.googleTagManagerId.trim(),
+    };
+    payload.wisePmsApi = {
       enable: form.wisePmsEnable,
       failAlertEmail: form.wisePmsFailAlertEmail,
       HotelCode: form.wisePmsHotelCode,
-    },
-  };
+    };
+  }
+  return payload;
 }
 
 async function load(): Promise<void> {
@@ -639,13 +647,25 @@ function onCoverDragEnd(): void {
         </ElTabPane>
 
         <ElTabPane label="GTM" name="gtm">
+          <ElAlert
+            v-if="!isSuperAdmin"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 16px"
+            title="GTM 會在客人訂房頁執行程式，只能由 Yumie 管理員（superAdmin）設定。需要修改請聯絡管理員。"
+            type="info"
+          />
           <ElForm label-width="160" @submit.prevent>
             <ElFormItem label="啟用 GTM">
-              <ElSwitch v-model="form.googleTagManagerEnable" />
+              <ElSwitch
+                v-model="form.googleTagManagerEnable"
+                :disabled="!isSuperAdmin"
+              />
             </ElFormItem>
             <ElFormItem v-if="form.googleTagManagerEnable" label="GTM ID">
               <ElInput
                 v-model="form.googleTagManagerId"
+                :disabled="!isSuperAdmin"
                 placeholder="GTM-XXXXXXX"
               />
             </ElFormItem>
